@@ -45,9 +45,8 @@ export function useAuthProvider() {
     ): Promise<boolean> => {
       const emailLower = inputEmail.toLowerCase().trim();
       const isValid =
-        (emailLower === DEMO_CREDENTIALS.email &&
-          password === DEMO_CREDENTIALS.password) ||
-        (emailLower.length > 0 && password.length >= 4);
+        emailLower === DEMO_CREDENTIALS.email &&
+        password === DEMO_CREDENTIALS.password;
 
       if (isValid) {
         const authData: AuthData = {
