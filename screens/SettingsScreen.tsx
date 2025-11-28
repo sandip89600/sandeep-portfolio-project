@@ -260,7 +260,7 @@ export default function SettingsScreen() {
             <View style={styles.profileInfo}>
               <ThemedText type="h3">{profile.name}</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {email || "admin@haajari.com"}
+                {email || "sandeep@gmail.com"}
               </ThemedText>
             </View>
           </View>
