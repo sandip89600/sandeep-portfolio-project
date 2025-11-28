@@ -7,12 +7,18 @@ const STORAGE_KEYS = {
   ATTENDANCE: "@haajari/attendance",
   SETTINGS: "@haajari/settings",
   LANGUAGE: "@haajari/language",
+  PROFILE: "@haajari/profile",
 };
 
 export interface AuthData {
   isLoggedIn: boolean;
   email: string;
   rememberMe: boolean;
+}
+
+export interface ProfileData {
+  name: string;
+  avatarColor: string;
 }
 
 export interface Worker {
@@ -202,6 +208,26 @@ export const storage = {
       );
     } catch (error) {
       console.error("Error saving settings:", error);
+    }
+  },
+
+  async getProfile(): Promise<ProfileData> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch {
+      // Fall through to default
+    }
+    return { name: "Admin", avatarColor: "#FF6B6B" };
+  },
+
+  async setProfile(profile: ProfileData): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+    } catch (error) {
+      console.error("Error saving profile:", error);
     }
   },
 

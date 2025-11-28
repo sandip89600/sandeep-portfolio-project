@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
   Pressable,
   Alert,
+  TextInput,
+  Modal,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -21,6 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
+import { storage, ProfileData } from "@/utils/storage";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -106,12 +110,57 @@ function SettingsItem({
   );
 }
 
+const AVATAR_COLORS = [
+  "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA15E"
+];
+
 export default function SettingsScreen() {
   const { theme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
   const { email, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
+  let tabBarHeight = insets.bottom;
+  try {
+    tabBarHeight = useBottomTabBarHeight();
+  } catch {
+    tabBarHeight = insets.bottom;
+  }
+  
+  const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    const data = await storage.getProfile();
+    setProfile(data);
+    setEditName(data.name);
+    setSelectedColor(data.avatarColor);
+  };
+
+  const handleSaveProfile = async () => {
+    if (editName.trim()) {
+      const updatedProfile: ProfileData = {
+        name: editName.trim(),
+        avatarColor: selectedColor || profile.avatarColor,
+      };
+      await storage.setProfile(updatedProfile);
+      setProfile(updatedProfile);
+      setShowEditModal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
+
+  const openEditModal = () => {
+    setEditName(profile.name);
+    setSelectedColor(profile.avatarColor);
+    setShowEditModal(true);
+  };
 
   const handleLanguageChange = (lang: Language) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -146,28 +195,108 @@ export default function SettingsScreen() {
         >
           {t.settings.profile.toUpperCase()}
         </ThemedText>
-        <View
-          style={[
-            styles.profileCard,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
+        <Pressable onPress={openEditModal}>
+          <View
+            style={[
+              styles.profileCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View
+              style={[
+                styles.avatar,
+                { backgroundColor: profile.avatarColor },
+              ]}
+            >
+              <Feather name="user" size={32} color="#FFFFFF" />
+            </View>
+            <View style={styles.profileInfo}>
+              <ThemedText type="h3">{profile.name}</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {email || "admin@haajari.com"}
+              </ThemedText>
+            </View>
+            <Feather name="edit-3" size={20} color={theme.primary} />
+          </View>
+        </Pressable>
+      </View>
+
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowEditModal(false)}
         >
           <View
             style={[
-              styles.avatar,
-              { backgroundColor: theme.primary + "20" },
+              styles.editModalContainer,
+              { backgroundColor: theme.backgroundDefault },
             ]}
           >
-            <Feather name="user" size={32} color={theme.primary} />
+            <ThemedText type="h3" style={styles.modalTitle}>Edit Profile</ThemedText>
+            
+            <View style={styles.formGroup}>
+              <ThemedText type="body" style={styles.formLabel}>Name</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                    backgroundColor: theme.backgroundRoot,
+                  },
+                ]}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Enter name"
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText type="body" style={styles.formLabel}>Avatar Color</ThemedText>
+              <View style={styles.colorGrid}>
+                {AVATAR_COLORS.map((color) => (
+                  <Pressable
+                    key={color}
+                    onPress={() => setSelectedColor(color)}
+                    style={[
+                      styles.colorOption,
+                      {
+                        backgroundColor: color,
+                        borderWidth: selectedColor === color ? 3 : 0,
+                        borderColor: selectedColor === color ? "#000" : "transparent",
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.buttonRow}>
+              <Pressable
+                onPress={() => setShowEditModal(false)}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.border },
+                ]}
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleSaveProfile}
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              >
+                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>Save</ThemedText>
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.profileInfo}>
-            <ThemedText type="h3">{t.settings.admin}</ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {email || "admin@haajari.com"}
-            </ThemedText>
-          </View>
-        </View>
-      </View>
+        </Pressable>
+      </Modal>
 
       <View style={styles.section}>
         <ThemedText
@@ -320,6 +449,61 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+  },
+  profileCard: {
+    ...styles.profileCard,
+    justifyContent: "space-between",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  editModalContainer: {
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    paddingBottom: Spacing["2xl"],
+  },
+  modalTitle: {
+    marginBottom: Spacing.lg,
+    fontWeight: "600",
+  },
+  formGroup: {
+    marginBottom: Spacing.lg,
+  },
+  formLabel: {
+    marginBottom: Spacing.sm,
+    fontWeight: "600",
+  },
+  input: {
+    height: Spacing.inputHeight,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    fontSize: 16,
+  },
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.md,
+  },
+  colorOption: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xs,
+    justifyContent: "center",
+    alignItems: "center",
   },
   settingsItem: {
     flexDirection: "row",
