@@ -690,18 +690,6 @@ export default function SettingsScreen() {
               </ThemedText>
             </Pressable>
 
-            {profileImage && (
-              <Pressable
-                onPress={handleRemoveProfileImage}
-                style={[styles.imageButton, { backgroundColor: theme.error + "15", marginTop: Spacing.lg }]}
-              >
-                <Feather name="trash-2" size={20} color={theme.error} />
-                <ThemedText type="body" style={{ color: theme.error, marginLeft: Spacing.md }}>
-                  Remove Picture
-                </ThemedText>
-              </Pressable>
-            )}
-
             <Pressable
               onPress={() => setShowImageModal(false)}
               style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.border, borderWidth: 1, marginTop: Spacing.lg }]}
