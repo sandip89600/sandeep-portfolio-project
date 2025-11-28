@@ -176,7 +176,7 @@ export default function SettingsScreen() {
 
     if (userType === "admin") {
       // For admin user
-      const adminPassword = "sandeep@7050";
+      const adminPassword = "sandeep121";
       if (oldPassword !== adminPassword) {
         Alert.alert("Error", "Current password is incorrect");
         return;
