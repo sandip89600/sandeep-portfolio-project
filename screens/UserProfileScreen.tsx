@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
@@ -48,6 +49,14 @@ export default function UserProfileScreen() {
       loadUserData();
     }
   }, [authUser]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (authUser) {
+        loadUserData();
+      }
+    }, [authUser])
+  );
 
   const loadUserData = async () => {
     if (authUser) {
@@ -305,23 +314,33 @@ export default function UserProfileScreen() {
             <ThemedText type="body">{user.email}</ThemedText>
           </View>
 
-          {user.phone && (
-            <View style={styles.infoRow}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Phone
+          <View style={styles.infoRow}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Phone
+            </ThemedText>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
+              <ThemedText type="body" style={{ color: user.phone ? theme.text : theme.textSecondary }}>
+                {user.phone || "Add phone number"}
               </ThemedText>
-              <ThemedText type="body">{user.phone}</ThemedText>
+              {!user.phone && (
+                <Feather name="plus-circle" size={18} color={theme.primary} />
+              )}
             </View>
-          )}
+          </View>
 
-          {user.address && (
-            <View style={styles.infoRow}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Address
+          <View style={styles.infoRow}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Address
+            </ThemedText>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flex: 1 }}>
+              <ThemedText type="body" style={{ color: user.address ? theme.text : theme.textSecondary }}>
+                {user.address || "Add address"}
               </ThemedText>
-              <ThemedText type="body">{user.address}</ThemedText>
+              {!user.address && (
+                <Feather name="plus-circle" size={18} color={theme.primary} />
+              )}
             </View>
-          )}
+          </View>
 
           <View style={styles.infoRow}>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
