@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   SETTINGS: "@haajari/settings",
   LANGUAGE: "@haajari/language",
   PROFILE: "@haajari/profile",
+  THEME: "@haajari/theme",
 };
 
 export interface AuthData {
@@ -71,6 +72,8 @@ export interface Settings {
   defaultMonth: number;
   defaultYear: number;
 }
+
+export type ThemeMode = "light" | "dark" | "system";
 
 export const storage = {
   // Auth methods
