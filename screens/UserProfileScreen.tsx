@@ -6,8 +6,11 @@ import {
   TextInput,
   Alert,
   Modal,
+  Image,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -37,6 +40,7 @@ export default function UserProfileScreen() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -51,6 +55,98 @@ export default function UserProfileScreen() {
         setUser(userData);
       }
     }
+  };
+
+  const requestCameraPermission = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      return status === "granted";
+    }
+    return true;
+  };
+
+  const requestLibraryPermission = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      return status === "granted";
+    }
+    return true;
+  };
+
+  const handlePickFromCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert("Permission Denied", "Camera permission is required to take photos");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await saveProfileImage(result.assets[0]);
+      setShowImageModal(false);
+    }
+  };
+
+  const handlePickFromLibrary = async () => {
+    const hasPermission = await requestLibraryPermission();
+    if (!hasPermission) {
+      Alert.alert("Permission Denied", "Photo library permission is required");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      await saveProfileImage(result.assets[0]);
+      setShowImageModal(false);
+    }
+  };
+
+  const saveProfileImage = async (imageAsset: any) => {
+    if (user) {
+      const base64 = imageAsset.base64
+        ? `data:image/jpeg;base64,${imageAsset.base64}`
+        : imageAsset.uri;
+
+      const updated = {
+        ...user,
+        profileImage: base64,
+      };
+      await storage.updateUser(updated);
+      setUser(updated);
+      Alert.alert("Success", "Profile picture updated successfully");
+    }
+  };
+
+  const handleRemoveProfileImage = () => {
+    Alert.alert("Remove Picture", "Remove profile picture?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          if (user) {
+            const updated = { ...user, profileImage: undefined };
+            await storage.updateUser(updated);
+            setUser(updated);
+            Alert.alert("Success", "Profile picture removed");
+          }
+        },
+      },
+    ]);
   };
 
   const openEditModal = () => {
@@ -153,20 +249,27 @@ export default function UserProfileScreen() {
         </ThemedText>
 
         <Pressable
-          onPress={openEditModal}
+          onPress={() => setShowImageModal(true)}
           style={[styles.profileCard, { backgroundColor: theme.backgroundDefault }]}
         >
           <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-            <View
-              style={[
-                styles.largeAvatar,
-                { backgroundColor: user.avatarColor },
-              ]}
-            >
-              <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
-                {user.name[0].toUpperCase()}
-              </ThemedText>
-            </View>
+            {user.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.largeAvatar,
+                  { backgroundColor: user.avatarColor },
+                ]}
+              >
+                <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
+                  {user.name[0].toUpperCase()}
+                </ThemedText>
+              </View>
+            )}
             <View style={{ flex: 1, marginLeft: Spacing.lg }}>
               <ThemedText type="h3">{user.name}</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -180,7 +283,7 @@ export default function UserProfileScreen() {
               </ThemedText>
             </View>
           </View>
-          <Feather name="edit-3" size={20} color={theme.primary} />
+          <Feather name="camera" size={20} color={theme.primary} />
         </Pressable>
 
         <View style={styles.section}>
@@ -466,6 +569,68 @@ export default function UserProfileScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowImageModal(false)}
+        >
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>
+              Update Profile Picture
+            </ThemedText>
+
+            <Pressable
+              onPress={handlePickFromCamera}
+              style={[styles.imageButton, { backgroundColor: theme.primary }]}
+            >
+              <Feather name="camera" size={20} color="#FFFFFF" />
+              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.md }}>
+                Take Photo
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePickFromLibrary}
+              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.primary, borderWidth: 1, marginTop: Spacing.lg }]}
+            >
+              <Feather name="image" size={20} color={theme.primary} />
+              <ThemedText type="body" style={{ color: theme.primary, marginLeft: Spacing.md }}>
+                Choose from Library
+              </ThemedText>
+            </Pressable>
+
+            {user.profileImage && (
+              <Pressable
+                onPress={handleRemoveProfileImage}
+                style={[styles.imageButton, { backgroundColor: theme.error + "15", marginTop: Spacing.lg }]}
+              >
+                <Feather name="trash-2" size={20} color={theme.error} />
+                <ThemedText type="body" style={{ color: theme.error, marginLeft: Spacing.md }}>
+                  Remove Picture
+                </ThemedText>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={() => setShowImageModal(false)}
+              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.border, borderWidth: 1, marginTop: Spacing.lg }]}
+            >
+              <ThemedText type="body">Cancel</ThemedText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -481,12 +646,19 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing["2xl"],
   },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: Spacing.lg,
+  },
   largeAvatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: Spacing.lg,
   },
   section: {
     marginBottom: Spacing["2xl"],
@@ -537,5 +709,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
+  },
+  imageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: Spacing.lg,
   },
 });

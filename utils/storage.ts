@@ -32,6 +32,7 @@ export interface User {
   phone?: string;
   address?: string;
   avatarColor: string;
+  profileImage?: string;
   role: "user" | "premium" | "moderator";
   isActive: boolean;
   createdAt: number;
