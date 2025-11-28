@@ -6,7 +6,10 @@ import {
   Alert,
   TextInput,
   Modal,
+  Image,
+  Platform,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -130,6 +133,8 @@ export default function SettingsScreen() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -137,6 +142,82 @@ export default function SettingsScreen() {
       setUser(authUser);
     }
   }, []);
+
+  const requestCameraPermission = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      return status === "granted";
+    }
+    return true;
+  };
+
+  const requestLibraryPermission = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      return status === "granted";
+    }
+    return true;
+  };
+
+  const handlePickFromCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert("Permission Denied", "Camera permission is required");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      saveProfileImage(result.assets[0]);
+      setShowImageModal(false);
+    }
+  };
+
+  const handlePickFromLibrary = async () => {
+    const hasPermission = await requestLibraryPermission();
+    if (!hasPermission) {
+      Alert.alert("Permission Denied", "Photo library permission is required");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      saveProfileImage(result.assets[0]);
+      setShowImageModal(false);
+    }
+  };
+
+  const saveProfileImage = (imageAsset: any) => {
+    const base64 = imageAsset.base64
+      ? `data:image/jpeg;base64,${imageAsset.base64}`
+      : imageAsset.uri;
+    setProfileImage(base64);
+    Alert.alert("Success", "Profile picture updated");
+  };
+
+  const handleRemoveProfileImage = () => {
+    Alert.alert("Remove Picture", "Remove profile picture?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => {
+          setProfileImage(null);
+          Alert.alert("Success", "Profile picture removed");
+        },
+      },
+    ]);
+  };
 
   const loadProfile = async () => {
     const data = await storage.getProfile();
@@ -228,12 +309,13 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenScrollView
-      contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.xl,
-        paddingBottom: tabBarHeight + Spacing.xl,
-      }}
-    >
+    <ThemedView style={{ flex: 1 }}>
+      <ScreenScrollView
+        contentContainerStyle={{
+          paddingTop: headerHeight + Spacing.xl,
+          paddingBottom: tabBarHeight + Spacing.xl,
+        }}
+      >
       <View style={styles.section}>
         <ThemedText
           type="small"
@@ -249,14 +331,21 @@ export default function SettingsScreen() {
               flex: 1,
             }}
           >
-            <View
-              style={[
-                styles.avatar,
-                { backgroundColor: profile.avatarColor },
-              ]}
-            >
-              <Feather name="user" size={32} color="#FFFFFF" />
-            </View>
+            {profileImage && userType === "admin" ? (
+              <Image
+                source={{ uri: profileImage }}
+                style={[styles.avatar, { width: 56, height: 56 }]}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: profile.avatarColor },
+                ]}
+              >
+                <Feather name="user" size={32} color="#FFFFFF" />
+              </View>
+            )}
             <View style={styles.profileInfo}>
               <ThemedText type="h3">{profile.name}</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -264,7 +353,9 @@ export default function SettingsScreen() {
               </ThemedText>
             </View>
           </View>
-          <Feather name="edit-3" size={20} color={theme.primary} />
+          <Pressable onPress={() => userType === "admin" && setShowImageModal(true)}>
+            <Feather name={userType === "admin" ? "camera" : "edit-3"} size={20} color={theme.primary} />
+          </Pressable>
         </Pressable>
       </View>
 
@@ -548,7 +639,70 @@ export default function SettingsScreen() {
           {t.app.name} v1.0.0
         </ThemedText>
       </View>
-    </ScreenScrollView>
+      </ScreenScrollView>
+
+      {userType === "admin" && (
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowImageModal(false)}
+        >
+          <View
+            style={[
+              styles.editModalContainer,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText type="h3" style={styles.modalTitle}>Update Profile Picture</ThemedText>
+
+            <Pressable
+              onPress={handlePickFromCamera}
+              style={[styles.imageButton, { backgroundColor: theme.primary }]}
+            >
+              <Feather name="camera" size={20} color="#FFFFFF" />
+              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.md }}>
+                Take Photo
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePickFromLibrary}
+              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.primary, borderWidth: 1, marginTop: Spacing.lg }]}
+            >
+              <Feather name="image" size={20} color={theme.primary} />
+              <ThemedText type="body" style={{ color: theme.primary, marginLeft: Spacing.md }}>
+                Choose from Library
+              </ThemedText>
+            </Pressable>
+
+            {profileImage && (
+              <Pressable
+                onPress={handleRemoveProfileImage}
+                style={[styles.imageButton, { backgroundColor: theme.error + "15", marginTop: Spacing.lg }]}
+              >
+                <Feather name="trash-2" size={20} color={theme.error} />
+                <ThemedText type="body" style={{ color: theme.error, marginLeft: Spacing.md }}>
+                  Remove Picture
+                </ThemedText>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={() => setShowImageModal(false)}
+              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.border, borderWidth: 1, marginTop: Spacing.lg }]}
+            >
+              <ThemedText type="body">Cancel</ThemedText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+      )}
+    </ThemedView>
   );
 }
 
@@ -689,5 +843,13 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: "center",
     paddingVertical: Spacing.xl,
+  },
+  imageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: Spacing.lg,
   },
 });

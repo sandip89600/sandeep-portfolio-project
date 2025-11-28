@@ -31,6 +31,7 @@ export default function AdminDashboardScreen() {
     total: 0,
     active: 0,
     inactive: 0,
+    loggedIn: 0,
   });
 
   useFocusEffect(
@@ -51,6 +52,7 @@ export default function AdminDashboardScreen() {
       total: userList.length,
       active: userList.filter((u) => u.isActive).length,
       inactive: userList.filter((u) => !u.isActive).length,
+      loggedIn: userList.filter((u) => u.loginHistory && u.loginHistory.length > 0).length,
     });
   };
 
@@ -204,6 +206,10 @@ export default function AdminDashboardScreen() {
           <StatCard label="Total Users" value={stats.total} color={theme.primary} />
           <StatCard label="Active" value={stats.active} color={theme.presentGreen} />
           <StatCard label="Inactive" value={stats.inactive} color={theme.error} />
+        </View>
+
+        <View style={styles.statsContainer}>
+          <StatCard label="Users Logged In" value={stats.loggedIn} color={theme.primary + "dd"} />
         </View>
 
         <View
