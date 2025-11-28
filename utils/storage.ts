@@ -114,6 +114,11 @@ export const storage = {
     return users.find((u) => u.id === userId) || null;
   },
 
+  async getUserByPhone(phone: string): Promise<User | null> {
+    const users = await this.getUsers();
+    return users.find((u) => u.phone === phone) || null;
+  },
+
   async addUser(user: User): Promise<void> {
     const users = await this.getUsers();
     users.push(user);

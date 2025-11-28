@@ -9,7 +9,7 @@ interface AuthContextType {
   email: string;
   user: User | null;
   login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  signup: (email: string, password: string, name: string, phone?: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -111,7 +111,8 @@ export function useAuthProvider() {
     async (
       inputEmail: string,
       password: string,
-      name: string
+      name: string,
+      phone?: string
     ): Promise<boolean> => {
       const emailLower = inputEmail.toLowerCase().trim();
 
@@ -121,13 +122,21 @@ export function useAuthProvider() {
         return false;
       }
 
+      // Check if phone already exists (if provided)
+      if (phone) {
+        const existingPhone = await storage.getUserByPhone(phone);
+        if (existingPhone) {
+          return false;
+        }
+      }
+
       // Create new user
       const newUser: User = {
         id: generateId(),
         email: emailLower,
         password,
         name,
-        phone: "",
+        phone: phone || "",
         address: "",
         avatarColor: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
         role: "user",

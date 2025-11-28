@@ -45,12 +45,17 @@ export default function SignupScreen() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOTP] = useState("");
+  const [verifiedOTP, setVerifiedOTP] = useState(false);
 
   const buttonScale = useSharedValue(1);
 
@@ -58,9 +63,49 @@ export default function SignupScreen() {
     transform: [{ scale: buttonScale.value }],
   }));
 
+  const handleSendOTP = async () => {
+    if (!phone.trim()) {
+      Alert.alert(t.common.error, "Please enter phone number");
+      return;
+    }
+    if (!phone.match(/^\+?[1-9]\d{1,14}$/)) {
+      Alert.alert(t.common.error, "Please enter a valid phone number");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      // Generate a demo OTP (in production, this would be sent via Twilio)
+      const demoOTP = Math.floor(100000 + Math.random() * 900000).toString();
+      Alert.alert("Demo OTP", `Your OTP is: ${demoOTP}\n\n(In production, this would be sent via SMS)`);
+      setShowOTP(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    // For demo: accept any 6-digit code
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+      Alert.alert(t.common.error, "Please enter a valid 6-digit OTP");
+      return;
+    }
+    setVerifiedOTP(true);
+    Alert.alert("Success", "Phone number verified");
+  };
+
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !password.trim()) {
       Alert.alert(t.common.error, "Please fill all fields");
+      return;
+    }
+
+    if (signupMethod === "email" && !email.trim()) {
+      Alert.alert(t.common.error, "Please enter email");
+      return;
+    }
+
+    if (signupMethod === "phone" && !verifiedOTP) {
+      Alert.alert(t.common.error, "Please verify your phone number");
       return;
     }
 
@@ -81,9 +126,10 @@ export default function SignupScreen() {
 
     setIsLoading(true);
     try {
-      const success = await signup(email, password, name);
+      const signupEmail = signupMethod === "email" ? email : `${phone}@haajari.app`;
+      const success = await signup(signupEmail, password, name, signupMethod === "phone" ? phone : undefined);
       if (!success) {
-        Alert.alert(t.common.error, "Email already registered");
+        Alert.alert(t.common.error, signupMethod === "email" ? "Email already registered" : "Phone already registered");
       }
     } finally {
       setIsLoading(false);
@@ -150,34 +196,166 @@ export default function SignupScreen() {
             </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <View
+          <View style={[styles.inputContainer, { flexDirection: "row", gap: Spacing.md }]}>
+            <Pressable
+              onPress={() => { setSignupMethod("email"); setShowOTP(false); setVerifiedOTP(false); }}
               style={[
-                styles.inputWrapper,
+                styles.methodButton,
                 {
-                  backgroundColor: theme.backgroundDefault,
+                  backgroundColor: signupMethod === "email" ? theme.primary : theme.backgroundDefault,
                   borderColor: theme.border,
                 },
               ]}
             >
-              <Feather
-                name="mail"
-                size={20}
-                color={theme.textSecondary}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={[styles.input, { color: theme.text }]}
-                placeholder="Email"
-                placeholderTextColor={theme.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-              />
-            </View>
+              <Feather name="mail" size={16} color={signupMethod === "email" ? "#FFFFFF" : theme.textSecondary} />
+              <ThemedText type="small" style={{ color: signupMethod === "email" ? "#FFFFFF" : theme.text, marginLeft: Spacing.xs }}>Email</ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => { setSignupMethod("phone"); setEmail(""); }}
+              style={[
+                styles.methodButton,
+                {
+                  backgroundColor: signupMethod === "phone" ? theme.primary : theme.backgroundDefault,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <Feather name="phone" size={16} color={signupMethod === "phone" ? "#FFFFFF" : theme.textSecondary} />
+              <ThemedText type="small" style={{ color: signupMethod === "phone" ? "#FFFFFF" : theme.text, marginLeft: Spacing.xs }}>Phone</ThemedText>
+            </Pressable>
           </View>
+
+          {signupMethod === "email" ? (
+            <View style={styles.inputContainer}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: theme.backgroundDefault,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Feather
+                  name="mail"
+                  size={20}
+                  color={theme.textSecondary}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="Email"
+                  placeholderTextColor={theme.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={styles.inputContainer}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: theme.backgroundDefault,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="phone"
+                    size={20}
+                    color={theme.textSecondary}
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder="+1 (555) 123-4567"
+                    placeholderTextColor={theme.textSecondary}
+                    value={phone}
+                    onChangeText={setPhone}
+                    editable={!showOTP}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              </View>
+
+              {!showOTP && (
+                <AnimatedPressable
+                  onPress={handleSendOTP}
+                  disabled={isLoading}
+                  style={[
+                    styles.signupButton,
+                    { backgroundColor: theme.primary, marginBottom: Spacing.lg },
+                  ]}
+                >
+                  <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                    {isLoading ? "Sending..." : "Send OTP"}
+                  </ThemedText>
+                </AnimatedPressable>
+              )}
+
+              {showOTP && !verifiedOTP && (
+                <View style={styles.inputContainer}>
+                  <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
+                    Enter 6-digit OTP
+                  </ThemedText>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      {
+                        backgroundColor: theme.backgroundDefault,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name="lock"
+                      size={20}
+                      color={theme.textSecondary}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={[styles.input, { color: theme.text }]}
+                      placeholder="000000"
+                      placeholderTextColor={theme.textSecondary}
+                      value={otp}
+                      onChangeText={(text) => setOTP(text.replace(/\D/g, "").slice(0, 6))}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                  </View>
+                  <AnimatedPressable
+                    onPress={handleVerifyOTP}
+                    disabled={isLoading || otp.length !== 6}
+                    style={[
+                      styles.signupButton,
+                      { backgroundColor: otp.length === 6 ? theme.primary : theme.border, marginTop: Spacing.lg, marginBottom: Spacing.lg },
+                    ]}
+                  >
+                    <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                      Verify OTP
+                    </ThemedText>
+                  </AnimatedPressable>
+                </View>
+              )}
+
+              {verifiedOTP && (
+                <View style={[styles.inputContainer, { backgroundColor: theme.presentGreen + "15", padding: Spacing.md, borderRadius: BorderRadius.xs }]}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Feather name="check-circle" size={20} color={theme.presentGreen} />
+                    <ThemedText type="small" style={{ color: theme.presentGreen, marginLeft: Spacing.sm }}>
+                      Phone verified
+                    </ThemedText>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
 
           <View style={styles.inputContainer}>
             <View
@@ -391,5 +569,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: Spacing.xl,
     paddingBottom: Spacing.xl,
+  },
+  methodButton: {
+    flex: 1,
+    flexDirection: "row",
+    height: 40,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
