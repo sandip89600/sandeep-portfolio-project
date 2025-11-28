@@ -21,6 +21,7 @@ import Animated, {
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { AppInfoModal } from "@/components/AppInfoModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -50,6 +51,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginType, setLoginType] = useState<"admin" | "user">("user");
+  const [showAppInfo, setShowAppInfo] = useState(false);
 
   const buttonScale = useSharedValue(1);
 
@@ -94,7 +96,10 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoContainer}>
+        <Pressable
+          onPress={() => setShowAppInfo(true)}
+          style={styles.logoContainer}
+        >
           <Image
             source={require("../assets/images/icon.png")}
             style={styles.logo}
@@ -114,7 +119,13 @@ export default function LoginScreen() {
           >
             {t.app.tagline}
           </ThemedText>
-        </View>
+          <View style={styles.infoHint}>
+            <Feather name="info" size={16} color={theme.primary} />
+            <ThemedText type="small" style={{ color: theme.primary, marginLeft: Spacing.xs }}>
+              Tap to view rules
+            </ThemedText>
+          </View>
+        </Pressable>
 
         <View style={styles.formContainer}>
           <ThemedText type="h2" style={styles.welcomeText}>
@@ -339,6 +350,8 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollContainer>
+
+      <AppInfoModal visible={showAppInfo} onClose={() => setShowAppInfo(false)} />
     </ThemedView>
   );
 }
@@ -369,6 +382,12 @@ const styles = StyleSheet.create({
   },
   tagline: {
     textAlign: "center",
+  },
+  infoHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.md,
+    justifyContent: "center",
   },
   formContainer: {
     flex: 1,
