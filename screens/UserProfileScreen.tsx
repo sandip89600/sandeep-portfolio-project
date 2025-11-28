@@ -33,6 +33,7 @@ export default function UserProfileScreen() {
   const [user, setUser] = useState<User | null>(authUser || null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editAvatarColor, setEditAvatarColor] = useState("");
@@ -152,6 +153,7 @@ export default function UserProfileScreen() {
   const openEditModal = () => {
     if (user) {
       setEditName(user.name);
+      setEditEmail(user.email);
       setEditPhone(user.phone || "");
       setEditAddress(user.address || "");
       setEditAvatarColor(user.avatarColor);
@@ -160,12 +162,17 @@ export default function UserProfileScreen() {
   };
 
   const handleSaveProfile = async () => {
+    if (!editName.trim() || !editEmail.trim()) {
+      Alert.alert("Error", "Name and Email are required");
+      return;
+    }
     if (user) {
       const updated = {
         ...user,
-        name: editName,
-        phone: editPhone,
-        address: editAddress,
+        name: editName.trim(),
+        email: editEmail.trim(),
+        phone: editPhone.trim(),
+        address: editAddress.trim(),
         avatarColor: editAvatarColor,
       };
       await storage.updateUser(updated);
@@ -395,6 +402,25 @@ export default function UserProfileScreen() {
               onChangeText={setEditName}
               placeholder="Name"
               placeholderTextColor={theme.textSecondary}
+            />
+
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginTop: Spacing.lg }}>
+              Email
+            </ThemedText>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundRoot,
+                },
+              ]}
+              value={editEmail}
+              onChangeText={setEditEmail}
+              placeholder="Email"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="email-address"
             />
 
             <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginTop: Spacing.lg }}>
