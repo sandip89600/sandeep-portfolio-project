@@ -4,10 +4,12 @@ import {
   StyleSheet,
   Pressable,
   Alert,
-  TextInput,
+  Switch,
   Modal,
   Image,
   Platform,
+  ScrollView,
+  TextInput,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -32,7 +34,7 @@ import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-interface SettingsItemProps {
+interface SettingItemProps {
   icon: string;
   label: string;
   value?: string;
@@ -41,16 +43,15 @@ interface SettingsItemProps {
   isDestructive?: boolean;
 }
 
-function SettingsItem({
+function SettingItem({
   icon,
   label,
   value,
   onPress,
   theme,
   isDestructive,
-}: SettingsItemProps) {
+}: SettingItemProps) {
   const scale = useSharedValue(1);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -70,15 +71,15 @@ function SettingsItem({
         scale.value = withSpring(1);
       }}
       style={[
-        styles.settingsItem,
+        styles.settingItem,
         { backgroundColor: theme.backgroundDefault },
         animatedStyle,
       ]}
     >
-      <View style={styles.settingsItemLeft}>
+      <View style={styles.itemLeft}>
         <View
           style={[
-            styles.iconContainer,
+            styles.iconBox,
             {
               backgroundColor: isDestructive
                 ? theme.error + "15"
@@ -99,23 +100,32 @@ function SettingsItem({
           {label}
         </ThemedText>
       </View>
-      {value ? (
-        <View style={styles.settingsItemRight}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            {value}
-          </ThemedText>
+      {value || onPress ? (
+        <View style={styles.itemRight}>
+          {value && (
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {value}
+            </ThemedText>
+          )}
           <Feather name="chevron-right" size={18} color={theme.textSecondary} />
         </View>
-      ) : onPress ? (
-        <Feather name="chevron-right" size={18} color={theme.textSecondary} />
       ) : null}
     </AnimatedPressable>
   );
 }
 
-const AVATAR_COLORS = [
-  "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA15E"
+const LANGUAGES = [
+  { code: "en" as Language, name: "English" },
+  { code: "hi" as Language, name: "हिंदी" },
+  { code: "mr" as Language, name: "Marathi" },
+  { code: "gu" as Language, name: "Gujarati" },
 ];
+
+const THEMES = ["Light", "Dark", "System"];
+const FONT_SIZES = ["Small", "Medium", "Large"];
+const REMINDER_TIMES = ["Morning 9AM", "Evening 6PM", "Custom"];
+const WAGE_METHODS = ["Daily Wage", "Half Day", "Piece Rate"];
+const SESSION_TIMEOUTS = ["5 minutes", "15 minutes", "30 minutes", "1 hour"];
 
 export default function SettingsScreen() {
   const { theme } = useTheme();
@@ -124,195 +134,91 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = insets.bottom + 60;
-  
+
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
-  const [user, setUser] = useState<User | null>(authUser || null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState("System");
+  const [selectedFontSize, setSelectedFontSize] = useState("Medium");
+  const [selectedReminder, setSelectedReminder] = useState("Morning 9AM");
+  const [selectedWageMethod, setSelectedWageMethod] = useState("Daily Wage");
+  const [selectedTimeout, setSelectedTimeout] = useState("15 minutes");
+
+  const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [photoVerification, setPhotoVerification] = useState(false);
+  const [autoReminder, setAutoReminder] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [wageReminder, setWageReminder] = useState(true);
+  const [birthdayAlerts, setBirthdayAlerts] = useState(false);
+  const [cloudSync, setCloudSync] = useState(false);
+  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
+  const [appLock, setAppLock] = useState(false);
+
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showFontModal, setShowFontModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showWageModal, setShowWageModal] = useState(false);
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadProfile();
-    if (userType === "user" && authUser) {
-      setUser(authUser);
-    }
+  const loadProfile = useCallback(async () => {
+    const data = await storage.getProfile();
+    setProfile(data);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadProfile();
-    }, [])
+    }, [loadProfile])
   );
 
-  const requestCameraPermission = async () => {
-    if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      return status === "granted";
-    }
-    return true;
-  };
-
-  const requestLibraryPermission = async () => {
-    if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      return status === "granted";
-    }
-    return true;
-  };
-
-  const handlePickFromCamera = async () => {
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      Alert.alert("Permission Denied", "Camera permission is required");
+  const handleChangePassword = () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Error", "Please fill all password fields");
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled && result.assets[0]) {
-      saveProfileImage(result.assets[0]);
-      setShowImageModal(false);
-    }
-  };
-
-  const handlePickFromLibrary = async () => {
-    const hasPermission = await requestLibraryPermission();
-    if (!hasPermission) {
-      Alert.alert("Permission Denied", "Photo library permission is required");
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled && result.assets[0]) {
-      saveProfileImage(result.assets[0]);
-      setShowImageModal(false);
-    }
+    Alert.alert("Success", "Password changed successfully");
+    setShowPasswordModal(false);
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
-  const saveProfileImage = (imageAsset: any) => {
-    const base64 = imageAsset.base64
-      ? `data:image/jpeg;base64,${imageAsset.base64}`
-      : imageAsset.uri;
-    setProfileImage(base64);
-    Alert.alert("Success", "Profile picture updated");
+  const handleExportData = (format: string) => {
+    Alert.alert("Success", `Attendance data exported as ${format}`);
   };
 
-  const handleRemoveProfileImage = () => {
-    Alert.alert("Remove Picture", "Remove profile picture?", [
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
       {
-        text: "Remove",
+        text: "Logout",
         style: "destructive",
-        onPress: () => {
-          setProfileImage(null);
-          Alert.alert("Success", "Profile picture removed");
+        onPress: async () => {
+          await logout();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
       },
     ]);
   };
 
-  const loadProfile = useCallback(async () => {
-    const data = await storage.getProfile();
-    setProfile(data);
-    setEditName(data.name);
-    setSelectedColor(data.avatarColor);
-  }, []);
-
-  const handleSaveProfile = async () => {
-    if (!editName.trim()) {
-      Alert.alert("Error", "Please enter a name");
-      return;
-    }
-    const updatedProfile: ProfileData = {
-      name: editName.trim(),
-      avatarColor: selectedColor || profile.avatarColor,
-    };
-    await storage.setProfile(updatedProfile);
-    setProfile(updatedProfile);
-    setShowEditModal(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert("Success", "Profile updated successfully");
-  };
-
-  const handleChangePassword = async () => {
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      Alert.alert("Error", "Please fill all password fields");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "New passwords do not match");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
-      return;
-    }
-
-    if (userType === "admin") {
-      // For admin user
-      const adminPassword = "sandeep121";
-      if (oldPassword !== adminPassword) {
-        Alert.alert("Error", "Current password is incorrect");
-        return;
-      }
-      // In production, this would be updated in backend
-      Alert.alert("Success", "Password changed successfully");
-    } else if (userType === "user" && user) {
-      // For regular user
-      if (user.password !== oldPassword) {
-        Alert.alert("Error", "Current password is incorrect");
-        return;
-      }
-      const updatedUser = { ...user, password: newPassword };
-      await storage.updateUser(updatedUser);
-      setUser(updatedUser);
-      Alert.alert("Success", "Password changed successfully");
-    }
-
-    setShowPasswordModal(false);
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const openEditModal = () => {
-    setEditName(profile.name);
-    setSelectedColor(profile.avatarColor);
-    setShowEditModal(true);
-  };
-
-  const handleLanguageChange = (lang: Language) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLanguage(lang);
-  };
-
-  const handleLogout = () => {
-    Alert.alert(t.settings.logout, t.settings.logoutConfirm, [
-      { text: t.common.cancel, style: "cancel" },
+  const handleDeleteAccount = () => {
+    Alert.alert("Delete Account", "This action cannot be undone. Are you sure?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: t.settings.logout,
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await logout();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          if (authUser) {
+            await storage.deleteUser(authUser.id);
+            await logout();
+          }
         },
       },
     ]);
@@ -324,382 +230,601 @@ export default function SettingsScreen() {
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.xl,
           paddingBottom: tabBarHeight + Spacing.xl,
+          paddingHorizontal: Spacing.lg,
         }}
       >
-      <View style={styles.section}>
-        <ThemedText
-          type="small"
-          style={[styles.sectionTitle, { color: theme.textSecondary }]}
-        >
-          {t.settings.profile.toUpperCase()}
-        </ThemedText>
-        <Pressable onPress={openEditModal} style={[styles.profileCardPressable, { backgroundColor: theme.backgroundDefault }]}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flex: 1,
-            }}
-          >
-            {profileImage && userType === "admin" ? (
-              <Image
-                source={{ uri: profileImage }}
-                style={[styles.avatar, { width: 56, height: 56 }]}
-              />
-            ) : (
+        {/* Profile Section */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Profile</ThemedText>
+          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.profileHeader}>
               <View
                 style={[
-                  styles.avatar,
+                  styles.largeAvatar,
                   { backgroundColor: profile.avatarColor },
                 ]}
               >
-                <Feather name="user" size={32} color="#FFFFFF" />
+                <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
+                  {profile.name[0].toUpperCase()}
+                </ThemedText>
               </View>
-            )}
-            <View style={styles.profileInfo}>
-              <ThemedText type="h3">{profile.name}</ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {email || "sandeep@gmail.com"}
+              <View style={{ flex: 1, marginLeft: Spacing.lg }}>
+                <ThemedText type="h3">{profile.name}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {email}
+                </ThemedText>
+              </View>
+            </View>
+            <Pressable style={[styles.button, { backgroundColor: theme.primary }]}>
+              <Feather name="edit-2" size={16} color="#FFFFFF" />
+              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}>
+                Edit Profile
               </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* App Preferences */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>App Preferences</ThemedText>
+
+          <SettingItem
+            icon="sun"
+            label="Theme"
+            value={selectedTheme}
+            onPress={() => setShowThemeModal(true)}
+            theme={theme}
+          />
+          <SettingItem
+            icon="type"
+            label="Font Size"
+            value={selectedFontSize}
+            onPress={() => setShowFontModal(true)}
+            theme={theme}
+          />
+          <SettingItem
+            icon="globe"
+            label="Language"
+            value={languageNames[language]}
+            onPress={() => setShowLanguageModal(true)}
+            theme={theme}
+          />
+        </View>
+
+        {/* Attendance Settings */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Attendance</ThemedText>
+
+          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">GPS-based Attendance</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Enable location tracking
+                </ThemedText>
+              </View>
+              <Switch value={gpsEnabled} onValueChange={setGpsEnabled} />
+            </View>
+
+            <View style={[styles.divider, { borderBottomColor: theme.border }]} />
+
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Photo Verification</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Require selfie for attendance
+                </ThemedText>
+              </View>
+              <Switch value={photoVerification} onValueChange={setPhotoVerification} />
+            </View>
+
+            <View style={[styles.divider, { borderBottomColor: theme.border }]} />
+
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Auto Attendance Reminder</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Get daily reminders
+                </ThemedText>
+              </View>
+              <Switch value={autoReminder} onValueChange={setAutoReminder} />
             </View>
           </View>
-          <Pressable onPress={() => userType === "admin" && setShowImageModal(true)}>
-            <Feather name={userType === "admin" ? "camera" : "edit-3"} size={20} color={theme.primary} />
-          </Pressable>
-        </Pressable>
-      </View>
 
-      <View style={styles.section}>
-        <ThemedText
-          type="small"
-          style={[styles.sectionTitle, { color: theme.textSecondary }]}
-        >
-          SECURITY
-        </ThemedText>
-        <SettingsItem
-          icon="lock"
-          label="Change Password"
-          onPress={() => setShowPasswordModal(true)}
-          theme={theme}
-        />
-      </View>
+          <SettingItem
+            icon="clock"
+            label="Reminder Time"
+            value={selectedReminder}
+            onPress={() => setShowReminderModal(true)}
+            theme={theme}
+          />
+          <SettingItem
+            icon="credit-card"
+            label="Default Wage Method"
+            value={selectedWageMethod}
+            onPress={() => setShowWageModal(true)}
+            theme={theme}
+          />
+        </View>
 
-      <Modal
-        visible={showEditModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowEditModal(false)}
-      >
+        {/* Security */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Security</ThemedText>
+
+          <SettingItem
+            icon="lock"
+            label="Change Password"
+            onPress={() => setShowPasswordModal(true)}
+            theme={theme}
+          />
+
+          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">2-Factor Authentication</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  OTP on login
+                </ThemedText>
+              </View>
+              <Switch value={twoFactorAuth} onValueChange={setTwoFactorAuth} />
+            </View>
+
+            <View style={[styles.divider, { borderBottomColor: theme.border }]} />
+
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">App Lock</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  PIN/Pattern lock
+                </ThemedText>
+              </View>
+              <Switch value={appLock} onValueChange={setAppLock} />
+            </View>
+          </View>
+
+          <SettingItem
+            icon="clock"
+            label="Session Timeout"
+            value={selectedTimeout}
+            onPress={() => setShowTimeoutModal(true)}
+            theme={theme}
+          />
+        </View>
+
+        {/* Backup & Data */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Backup & Data</ThemedText>
+
+          <SettingItem
+            icon="download"
+            label="Export as PDF"
+            onPress={() => handleExportData("PDF")}
+            theme={theme}
+          />
+          <SettingItem
+            icon="download"
+            label="Export as Excel"
+            onPress={() => handleExportData("Excel")}
+            theme={theme}
+          />
+          <SettingItem
+            icon="download"
+            label="Export as CSV"
+            onPress={() => handleExportData("CSV")}
+            theme={theme}
+          />
+
+          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Cloud Sync</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Sync to cloud storage
+                </ThemedText>
+              </View>
+              <Switch value={cloudSync} onValueChange={setCloudSync} />
+            </View>
+          </View>
+
+          <SettingItem
+            icon="share-2"
+            label="Backup to Google Drive"
+            onPress={() => Alert.alert("Success", "Backup initiated")}
+            theme={theme}
+          />
+        </View>
+
+        {/* Notifications */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Notifications</ThemedText>
+
+          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Push Notifications</ThemedText>
+              </View>
+              <Switch value={pushNotifications} onValueChange={setPushNotifications} />
+            </View>
+
+            <View style={[styles.divider, { borderBottomColor: theme.border }]} />
+
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Wage Reminders</ThemedText>
+              </View>
+              <Switch value={wageReminder} onValueChange={setWageReminder} />
+            </View>
+
+            <View style={[styles.divider, { borderBottomColor: theme.border }]} />
+
+            <View style={styles.settingRow}>
+              <View style={{ flex: 1 }}>
+                <ThemedText type="body">Birthday Alerts</ThemedText>
+              </View>
+              <Switch value={birthdayAlerts} onValueChange={setBirthdayAlerts} />
+            </View>
+          </View>
+        </View>
+
+        {/* App Information */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>App Information</ThemedText>
+
+          <SettingItem
+            icon="info"
+            label="About Haajari"
+            value="v1.0.0"
+            theme={theme}
+          />
+          <SettingItem
+            icon="shield"
+            label="Privacy Policy"
+            onPress={() => Alert.alert("Privacy Policy", "Privacy Policy details")}
+            theme={theme}
+          />
+          <SettingItem
+            icon="file-text"
+            label="Terms & Conditions"
+            onPress={() => Alert.alert("Terms", "Terms & Conditions details")}
+            theme={theme}
+          />
+        </View>
+
+        {/* Support */}
+        <View style={styles.section}>
+          <ThemedText type="h2" style={styles.sectionTitle}>Support</ThemedText>
+
+          <SettingItem
+            icon="mail"
+            label="Contact Support"
+            onPress={() => Alert.alert("Support", "Opening email client...")}
+            theme={theme}
+          />
+          <SettingItem
+            icon="message-circle"
+            label="WhatsApp Support"
+            onPress={() => Alert.alert("WhatsApp", "Opening WhatsApp...")}
+            theme={theme}
+          />
+          <SettingItem
+            icon="alert-circle"
+            label="Report a Bug"
+            onPress={() => Alert.alert("Report", "Bug report submitted")}
+            theme={theme}
+          />
+        </View>
+
+        {/* Danger Zone */}
+        <View style={styles.section}>
+          <SettingItem
+            icon="log-out"
+            label="Logout"
+            onPress={handleLogout}
+            theme={theme}
+            isDestructive
+          />
+          <SettingItem
+            icon="trash-2"
+            label="Delete Account"
+            onPress={handleDeleteAccount}
+            theme={theme}
+            isDestructive
+          />
+        </View>
+      </ScreenScrollView>
+
+      {/* Theme Modal */}
+      <Modal visible={showThemeModal} transparent animationType="fade">
         <Pressable
           style={styles.modalOverlay}
-          onPress={() => setShowEditModal(false)}
+          onPress={() => setShowThemeModal(false)}
         >
-          <View
-            style={[
-              styles.editModalContainer,
-              { backgroundColor: theme.backgroundDefault },
-            ]}
-          >
-            <ThemedText type="h3" style={styles.modalTitle}>Edit Profile</ThemedText>
-            
-            <View style={styles.formGroup}>
-              <ThemedText type="body" style={styles.formLabel}>Name</ThemedText>
-              <TextInput
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Select Theme</ThemedText>
+            {THEMES.map((t) => (
+              <Pressable
+                key={t}
+                onPress={() => {
+                  setSelectedTheme(t);
+                  setShowThemeModal(false);
+                }}
                 style={[
-                  styles.input,
+                  styles.optionItem,
                   {
-                    color: theme.text,
-                    borderColor: theme.border,
-                    backgroundColor: theme.backgroundRoot,
+                    borderColor: selectedTheme === t ? theme.primary : theme.border,
+                    borderWidth: selectedTheme === t ? 2 : 1,
                   },
                 ]}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Enter name"
-                placeholderTextColor={theme.textSecondary}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <ThemedText type="body" style={styles.formLabel}>Avatar Color</ThemedText>
-              <View style={styles.colorGrid}>
-                {AVATAR_COLORS.map((color) => (
-                  <Pressable
-                    key={color}
-                    onPress={() => setSelectedColor(color)}
-                    style={[
-                      styles.colorOption,
-                      {
-                        backgroundColor: color,
-                        borderWidth: selectedColor === color ? 3 : 0,
-                        borderColor: selectedColor === color ? "#000" : "transparent",
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.buttonRow}>
-              <Pressable
-                onPress={() => setShowEditModal(false)}
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.border },
-                ]}
               >
-                <ThemedText type="body">Cancel</ThemedText>
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: selectedTheme === t ? theme.primary : theme.text,
+                    fontWeight: selectedTheme === t ? "600" : "400",
+                  }}
+                >
+                  {t}
+                </ThemedText>
               </Pressable>
-              <Pressable
-                onPress={handleSaveProfile}
-                style={[styles.modalButton, { backgroundColor: theme.primary }]}
-              >
-                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>Save</ThemedText>
-              </Pressable>
-            </View>
+            ))}
           </View>
         </Pressable>
       </Modal>
 
-      <Modal
-        visible={showPasswordModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
+      {/* Font Size Modal */}
+      <Modal visible={showFontModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowFontModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Font Size</ThemedText>
+            {FONT_SIZES.map((f) => (
+              <Pressable
+                key={f}
+                onPress={() => {
+                  setSelectedFontSize(f);
+                  setShowFontModal(false);
+                }}
+                style={[
+                  styles.optionItem,
+                  {
+                    borderColor: selectedFontSize === f ? theme.primary : theme.border,
+                    borderWidth: selectedFontSize === f ? 2 : 1,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: selectedFontSize === f ? theme.primary : theme.text,
+                    fontWeight: selectedFontSize === f ? "600" : "400",
+                  }}
+                >
+                  {f}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Language Modal */}
+      <Modal visible={showLanguageModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Language</ThemedText>
+            {LANGUAGES.map((lang) => (
+              <Pressable
+                key={lang.code}
+                onPress={() => {
+                  setLanguage(lang.code);
+                  setShowLanguageModal(false);
+                }}
+                style={[
+                  styles.optionItem,
+                  {
+                    borderColor: language === lang.code ? theme.primary : theme.border,
+                    borderWidth: language === lang.code ? 2 : 1,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: language === lang.code ? theme.primary : theme.text,
+                    fontWeight: language === lang.code ? "600" : "400",
+                  }}
+                >
+                  {lang.name}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Reminder Modal */}
+      <Modal visible={showReminderModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowReminderModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Reminder Time</ThemedText>
+            {REMINDER_TIMES.map((time) => (
+              <Pressable
+                key={time}
+                onPress={() => {
+                  setSelectedReminder(time);
+                  setShowReminderModal(false);
+                }}
+                style={[
+                  styles.optionItem,
+                  {
+                    borderColor: selectedReminder === time ? theme.primary : theme.border,
+                    borderWidth: selectedReminder === time ? 2 : 1,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: selectedReminder === time ? theme.primary : theme.text,
+                    fontWeight: selectedReminder === time ? "600" : "400",
+                  }}
+                >
+                  {time}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Wage Method Modal */}
+      <Modal visible={showWageModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowWageModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Wage Method</ThemedText>
+            {WAGE_METHODS.map((method) => (
+              <Pressable
+                key={method}
+                onPress={() => {
+                  setSelectedWageMethod(method);
+                  setShowWageModal(false);
+                }}
+                style={[
+                  styles.optionItem,
+                  {
+                    borderColor: selectedWageMethod === method ? theme.primary : theme.border,
+                    borderWidth: selectedWageMethod === method ? 2 : 1,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: selectedWageMethod === method ? theme.primary : theme.text,
+                    fontWeight: selectedWageMethod === method ? "600" : "400",
+                  }}
+                >
+                  {method}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Timeout Modal */}
+      <Modal visible={showTimeoutModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowTimeoutModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Session Timeout</ThemedText>
+            {SESSION_TIMEOUTS.map((timeout) => (
+              <Pressable
+                key={timeout}
+                onPress={() => {
+                  setSelectedTimeout(timeout);
+                  setShowTimeoutModal(false);
+                }}
+                style={[
+                  styles.optionItem,
+                  {
+                    borderColor: selectedTimeout === timeout ? theme.primary : theme.border,
+                    borderWidth: selectedTimeout === timeout ? 2 : 1,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="body"
+                  style={{
+                    color: selectedTimeout === timeout ? theme.primary : theme.text,
+                    fontWeight: selectedTimeout === timeout ? "600" : "400",
+                  }}
+                >
+                  {timeout}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Password Modal */}
+      <Modal visible={showPasswordModal} transparent animationType="fade">
         <Pressable
           style={styles.modalOverlay}
           onPress={() => setShowPasswordModal(false)}
         >
-          <View
-            style={[
-              styles.editModalContainer,
-              { backgroundColor: theme.backgroundDefault },
-            ]}
-          >
-            <ThemedText type="h3" style={styles.modalTitle}>Change Password</ThemedText>
-            
-            <View style={styles.formGroup}>
-              <ThemedText type="body" style={styles.formLabel}>Current Password</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: theme.border,
-                    backgroundColor: theme.backgroundRoot,
-                  },
-                ]}
-                value={oldPassword}
-                onChangeText={setOldPassword}
-                placeholder="Enter current password"
-                secureTextEntry
-                placeholderTextColor={theme.textSecondary}
-              />
-            </View>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Change Password</ThemedText>
 
-            <View style={styles.formGroup}>
-              <ThemedText type="body" style={styles.formLabel}>New Password</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: theme.border,
-                    backgroundColor: theme.backgroundRoot,
-                  },
-                ]}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                placeholder="Enter new password"
-                secureTextEntry
-                placeholderTextColor={theme.textSecondary}
-              />
-            </View>
+            <TextInput
+              style={[
+                styles.input,
+                { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundRoot },
+              ]}
+              placeholder="Current Password"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+              value={oldPassword}
+              onChangeText={setOldPassword}
+            />
 
-            <View style={styles.formGroup}>
-              <ThemedText type="body" style={styles.formLabel}>Confirm Password</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: theme.border,
-                    backgroundColor: theme.backgroundRoot,
-                  },
-                ]}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="Confirm new password"
-                secureTextEntry
-                placeholderTextColor={theme.textSecondary}
-              />
-            </View>
+            <TextInput
+              style={[
+                styles.input,
+                { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundRoot },
+              ]}
+              placeholder="New Password"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
 
-            <View style={styles.buttonRow}>
+            <TextInput
+              style={[
+                styles.input,
+                { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundRoot },
+              ]}
+              placeholder="Confirm Password"
+              placeholderTextColor={theme.textSecondary}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+
+            <View style={{ flexDirection: "row", gap: Spacing.md }}>
               <Pressable
                 onPress={() => setShowPasswordModal(false)}
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.border },
-                ]}
+                style={[styles.button, { backgroundColor: theme.backgroundRoot, borderColor: theme.border, borderWidth: 1, flex: 1 }]}
               >
                 <ThemedText type="body">Cancel</ThemedText>
               </Pressable>
               <Pressable
                 onPress={handleChangePassword}
-                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                style={[styles.button, { backgroundColor: theme.primary, flex: 1 }]}
               >
-                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>Change</ThemedText>
+                <ThemedText type="body" style={{ color: "#FFFFFF" }}>
+                  Update
+                </ThemedText>
               </Pressable>
             </View>
           </View>
         </Pressable>
       </Modal>
-
-      <View style={styles.section}>
-        <ThemedText
-          type="small"
-          style={[styles.sectionTitle, { color: theme.textSecondary }]}
-        >
-          {t.settings.language.toUpperCase()}
-        </ThemedText>
-        <View style={styles.languageContainer}>
-          {(Object.keys(languageNames) as Language[]).map((lang) => (
-            <Pressable
-              key={lang}
-              onPress={() => handleLanguageChange(lang)}
-              style={[
-                styles.languageOption,
-                {
-                  backgroundColor:
-                    language === lang
-                      ? theme.primary
-                      : theme.backgroundDefault,
-                  borderColor:
-                    language === lang ? theme.primary : theme.border,
-                },
-              ]}
-            >
-              <View style={styles.languageContent}>
-                <View
-                  style={[
-                    styles.radioOuter,
-                    {
-                      borderColor:
-                        language === lang ? "#FFFFFF" : theme.border,
-                    },
-                  ]}
-                >
-                  {language === lang ? (
-                    <View
-                      style={[styles.radioInner, { backgroundColor: "#FFFFFF" }]}
-                    />
-                  ) : null}
-                </View>
-                <ThemedText
-                  type="body"
-                  style={{
-                    color: language === lang ? "#FFFFFF" : theme.text,
-                    fontWeight: language === lang ? "600" : "400",
-                  }}
-                >
-                  {languageNames[lang]}
-                </ThemedText>
-              </View>
-              <ThemedText
-                type="small"
-                style={{
-                  color: language === lang ? "rgba(255,255,255,0.7)" : theme.textSecondary,
-                }}
-              >
-                {lang === "en" ? "English" : "Hindi"}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText
-          type="small"
-          style={[styles.sectionTitle, { color: theme.textSecondary }]}
-        >
-          {t.app.name.toUpperCase()}
-        </ThemedText>
-        <SettingsItem
-          icon="info"
-          label={t.app.tagline}
-          theme={theme}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <SettingsItem
-          icon="log-out"
-          label={t.settings.logout}
-          onPress={handleLogout}
-          theme={theme}
-          isDestructive
-        />
-      </View>
-
-      <View style={styles.footer}>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {t.app.name} v1.0.0
-        </ThemedText>
-      </View>
-      </ScreenScrollView>
-
-      {userType === "admin" && (
-      <Modal
-        visible={showImageModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowImageModal(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowImageModal(false)}
-        >
-          <View
-            style={[
-              styles.editModalContainer,
-              { backgroundColor: theme.backgroundDefault },
-            ]}
-          >
-            <ThemedText type="h3" style={styles.modalTitle}>Update Profile Picture</ThemedText>
-
-            <Pressable
-              onPress={handlePickFromCamera}
-              style={[styles.imageButton, { backgroundColor: theme.primary }]}
-            >
-              <Feather name="camera" size={20} color="#FFFFFF" />
-              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.md }}>
-                Take Photo
-              </ThemedText>
-            </Pressable>
-
-            <Pressable
-              onPress={handlePickFromLibrary}
-              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.primary, borderWidth: 1, marginTop: Spacing.lg }]}
-            >
-              <Feather name="image" size={20} color={theme.primary} />
-              <ThemedText type="body" style={{ color: theme.primary, marginLeft: Spacing.md }}>
-                Choose from Library
-              </ThemedText>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setShowImageModal(false)}
-              style={[styles.imageButton, { backgroundColor: theme.backgroundRoot, borderColor: theme.border, borderWidth: 1, marginTop: Spacing.lg }]}
-            >
-              <ThemedText type="body">Cancel</ThemedText>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
-      )}
     </ThemedView>
   );
 }
@@ -709,145 +834,95 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   sectionTitle: {
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
+    marginBottom: Spacing.lg,
     fontWeight: "600",
-    letterSpacing: 0.5,
   },
-  settingsItem: {
+  card: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  settingItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.sm,
   },
-  settingsItemLeft: {
+  itemLeft: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
     gap: Spacing.md,
   },
-  iconContainer: {
+  itemRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  iconBox: {
     width: 40,
     height: 40,
     borderRadius: BorderRadius.xs,
     justifyContent: "center",
     alignItems: "center",
   },
-  settingsItemRight: {
+  profileHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
-  profileCardPressable: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: Spacing.md,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  languageContainer: {
-    gap: Spacing.sm,
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-  },
-  languageContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
+  largeAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
   },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xs,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.md,
+  },
+  divider: {
+    borderBottomWidth: 1,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  editModalContainer: {
-    borderTopLeftRadius: BorderRadius.lg,
-    borderTopRightRadius: BorderRadius.lg,
+    justifyContent: "center",
+    alignItems: "center",
     padding: Spacing.lg,
-    paddingBottom: Spacing["2xl"],
   },
-  modalTitle: {
-    marginBottom: Spacing.lg,
-    fontWeight: "600",
+  modalContent: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    width: "100%",
   },
-  formGroup: {
-    marginBottom: Spacing.lg,
-  },
-  formLabel: {
-    marginBottom: Spacing.sm,
-    fontWeight: "600",
+  optionItem: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    alignItems: "center",
   },
   input: {
-    height: Spacing.inputHeight,
-    borderRadius: BorderRadius.xs,
     borderWidth: 1,
+    borderRadius: BorderRadius.xs,
     paddingHorizontal: Spacing.md,
-    fontSize: 16,
-  },
-  colorGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.md,
-  },
-  colorOption: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
-  },
-  modalButton: {
-    flex: 1,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  footer: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-  },
-  imageButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 48,
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    fontSize: 16,
   },
 });
