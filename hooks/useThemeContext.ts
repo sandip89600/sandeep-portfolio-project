@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemeMode } from "@/utils/storage";
 
@@ -33,8 +33,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem("@haajari/theme", mode);
   };
 
+  const contextValue = { themeMode, setThemeMode, isLoading };
+
   return (
-    <ThemeContext.Provider value={{ themeMode, setThemeMode, isLoading }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
