@@ -49,6 +49,7 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginType, setLoginType] = useState<"admin" | "user">("user");
 
   const buttonScale = useSharedValue(1);
 
@@ -119,6 +120,61 @@ export default function LoginScreen() {
           <ThemedText type="h2" style={styles.welcomeText}>
             {t.auth.welcome}
           </ThemedText>
+
+          <View style={styles.loginTypeContainer}>
+            <Pressable
+              onPress={() => setLoginType("user")}
+              style={[
+                styles.loginTypeButton,
+                {
+                  backgroundColor: loginType === "user" ? theme.primary : theme.backgroundDefault,
+                  borderColor: loginType === "user" ? theme.primary : theme.border,
+                },
+              ]}
+            >
+              <Feather
+                name="users"
+                size={18}
+                color={loginType === "user" ? "#FFFFFF" : theme.text}
+              />
+              <ThemedText
+                type="body"
+                style={{
+                  color: loginType === "user" ? "#FFFFFF" : theme.text,
+                  fontWeight: loginType === "user" ? "600" : "400",
+                  marginLeft: Spacing.sm,
+                }}
+              >
+                User Login
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => setLoginType("admin")}
+              style={[
+                styles.loginTypeButton,
+                {
+                  backgroundColor: loginType === "admin" ? theme.primary : theme.backgroundDefault,
+                  borderColor: loginType === "admin" ? theme.primary : theme.border,
+                },
+              ]}
+            >
+              <Feather
+                name="shield"
+                size={18}
+                color={loginType === "admin" ? "#FFFFFF" : theme.text}
+              />
+              <ThemedText
+                type="body"
+                style={{
+                  color: loginType === "admin" ? "#FFFFFF" : theme.text,
+                  fontWeight: loginType === "admin" ? "600" : "400",
+                  marginLeft: Spacing.sm,
+                }}
+              >
+                Admin Login
+              </ThemedText>
+            </Pressable>
+          </View>
 
           <View style={styles.inputContainer}>
             <View
@@ -236,14 +292,16 @@ export default function LoginScreen() {
             </ThemedText>
           </AnimatedPressable>
 
-          <View style={styles.signupContainer}>
-            <ThemedText type="body">Don't have an account? </ThemedText>
-            <Pressable onPress={() => navigationProp.push("Signup")}>
-              <ThemedText type="body" style={{ color: theme.primary, fontWeight: "600" }}>
-                Sign Up
-              </ThemedText>
-            </Pressable>
-          </View>
+          {loginType === "user" && (
+            <View style={styles.signupContainer}>
+              <ThemedText type="body">Don't have an account? </ThemedText>
+              <Pressable onPress={() => navigationProp.push("Signup")}>
+                <ThemedText type="body" style={{ color: theme.primary, fontWeight: "600" }}>
+                  Sign Up
+                </ThemedText>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.languageContainer}>
@@ -388,5 +446,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: Spacing.xl,
+  },
+  loginTypeContainer: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginBottom: Spacing["2xl"],
+  },
+  loginTypeButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
   },
 });
