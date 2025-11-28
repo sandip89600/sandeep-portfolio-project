@@ -1,0 +1,101 @@
+{
+  "app": {
+    "name": "हाजरी",
+    "tagline": "मजदूर हाजरी प्रबंधक"
+  },
+  "auth": {
+    "welcome": "स्वागत है",
+    "email": "ईमेल या मोबाइल",
+    "password": "पासवर्ड या पिन",
+    "login": "लॉगिन",
+    "rememberMe": "मुझे याद रखें",
+    "invalidCredentials": "गलत ईमेल या पासवर्ड"
+  },
+  "tabs": {
+    "attendance": "हाजरी",
+    "workers": "कामगार",
+    "summary": "सारांश",
+    "settings": "सेटिंग्स"
+  },
+  "attendance": {
+    "title": "हाजरी",
+    "present": "उ",
+    "absent": "ग",
+    "halfDay": "आ",
+    "noWorkers": "अभी तक कोई कामगार नहीं जोड़ा",
+    "addWorkerFirst": "हाजरी ट्रैक करने के लिए कामगार टैब से कामगार जोड़ें",
+    "tapToMark": "हाजरी लगाने के लिए टैप करें"
+  },
+  "workers": {
+    "title": "कामगार",
+    "addWorker": "कामगार जोड़ें",
+    "editWorker": "कामगार संपादित करें",
+    "name": "कामगार का नाम",
+    "category": "श्रेणी",
+    "dailyRate": "दैनिक दर",
+    "save": "सेव करें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "deleteConfirm": "क्या आप वाकई इस कामगार को हटाना चाहते हैं?",
+    "noWorkers": "अभी तक कोई कामगार नहीं",
+    "addFirst": "+ टैप करके पहला कामगार जोड़ें"
+  },
+  "categories": {
+    "labour": "मजदूर",
+    "bai": "बाई",
+    "mistri": "मिस्त्री",
+    "bandkam": "बांधकाम",
+    "plaster": "प्लास्टर",
+    "tiles": "टाइल्स",
+    "sutar": "सुतार"
+  },
+  "summary": {
+    "title": "सारांश",
+    "totalPresent": "उपस्थित",
+    "totalHalfDays": "आधा दिन",
+    "totalAbsent": "अनुपस्थित",
+    "totalAmount": "कुल राशि",
+    "adjustment": "मैनुअल एडजस्टमेंट",
+    "finalAmount": "अंतिम राशि",
+    "noData": "इस महीने के लिए कोई हाजरी डेटा नहीं"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "language": "भाषा",
+    "english": "अंग्रेजी",
+    "hindi": "हिंदी",
+    "profile": "प्रोफाइल",
+    "admin": "एडमिन",
+    "logout": "लॉगआउट",
+    "logoutConfirm": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
+    "defaultMonth": "डिफॉल्ट महीना व्यू"
+  },
+  "months": {
+    "january": "जनवरी",
+    "february": "फरवरी",
+    "march": "मार्च",
+    "april": "अप्रैल",
+    "may": "मई",
+    "june": "जून",
+    "july": "जुलाई",
+    "august": "अगस्त",
+    "september": "सितंबर",
+    "october": "अक्टूबर",
+    "november": "नवंबर",
+    "december": "दिसंबर"
+  },
+  "common": {
+    "save": "सेव करें",
+    "cancel": "रद्द करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "add": "जोड़ें",
+    "yes": "हां",
+    "no": "नहीं",
+    "ok": "ठीक है",
+    "error": "त्रुटि",
+    "success": "सफल",
+    "loading": "लोड हो रहा है...",
+    "currency": "रु"
+  }
+}
