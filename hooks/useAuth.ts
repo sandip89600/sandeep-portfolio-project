@@ -12,8 +12,8 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 const DEMO_CREDENTIALS = {
-  email: "admin@haajari.com",
-  password: "1234",
+  email: "haajri121",
+  password: "12345678",
 };
 
 export function useAuthProvider() {
