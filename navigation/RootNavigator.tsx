@@ -4,11 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 import LoginScreen from "@/screens/LoginScreen";
+import SignupScreen from "@/screens/SignupScreen";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 
 export type RootNavigatorParamList = {
   Login: undefined;
+  Signup: undefined;
   Main: undefined;
 };
 
@@ -38,7 +40,10 @@ export default function RootNavigator() {
       {isLoggedIn ? (
         <Stack.Screen name="Main" component={MainTabNavigator} />
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

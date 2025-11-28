@@ -19,35 +19,36 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Language, languageNames } from "@/constants/i18n";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootNavigatorParamList } from "@/navigation/RootNavigator";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<
+type SignupScreenNavigationProp = NativeStackNavigationProp<
   RootNavigatorParamList,
-  "Login"
+  "Signup"
 >;
 
-export default function LoginScreen() {
-  const navigationProp = useNavigation<LoginScreenNavigationProp>();
+export default function SignupScreen() {
   const { theme } = useTheme();
-  const { login } = useAuth();
-  const { t, language, setLanguage } = useLanguage();
+  const { signup } = useAuth();
+  const { t } = useLanguage();
+  const navigation = useNavigation<SignupScreenNavigationProp>();
   const insets = useSafeAreaInsets();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const buttonScale = useSharedValue(1);
@@ -56,25 +57,31 @@ export default function LoginScreen() {
     transform: [{ scale: buttonScale.value }],
   }));
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert(t.common.error, t.auth.invalidCredentials);
+  const handleSignup = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      Alert.alert(t.common.error, "Please fill all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert(t.common.error, "Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert(t.common.error, "Password must be at least 6 characters");
       return;
     }
 
     setIsLoading(true);
     try {
-      const success = await login(email, password, rememberMe);
+      const success = await signup(email, password, name);
       if (!success) {
-        Alert.alert(t.common.error, t.auth.invalidCredentials);
+        Alert.alert(t.common.error, "Email already registered");
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
   };
 
   const ScrollContainer = Platform.OS === "web" ? ScrollView : KeyboardAwareScrollView;
@@ -100,25 +107,42 @@ export default function LoginScreen() {
             resizeMode="contain"
           />
           <ThemedText
-            type="h1"
+            type="h2"
             style={[styles.appName, { color: Colors.light.primaryDark }]}
             lightColor={Colors.light.primaryDark}
             darkColor={Colors.dark.text}
           >
-            {t.app.name}
-          </ThemedText>
-          <ThemedText
-            type="body"
-            style={[styles.tagline, { color: theme.textSecondary }]}
-          >
-            {t.app.tagline}
+            Create Account
           </ThemedText>
         </View>
 
         <View style={styles.formContainer}>
-          <ThemedText type="h2" style={styles.welcomeText}>
-            {t.auth.welcome}
-          </ThemedText>
+          <View style={styles.inputContainer}>
+            <View
+              style={[
+                styles.inputWrapper,
+                {
+                  backgroundColor: theme.backgroundDefault,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <Feather
+                name="user"
+                size={20}
+                color={theme.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Full Name"
+                placeholderTextColor={theme.textSecondary}
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+              />
+            </View>
+          </View>
 
           <View style={styles.inputContainer}>
             <View
@@ -138,7 +162,7 @@ export default function LoginScreen() {
               />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
-                placeholder={t.auth.email}
+                placeholder="Email"
                 placeholderTextColor={theme.textSecondary}
                 value={email}
                 onChangeText={setEmail}
@@ -167,7 +191,7 @@ export default function LoginScreen() {
               />
               <TextInput
                 style={[styles.input, { color: theme.text }]}
-                placeholder={t.auth.password}
+                placeholder="Password"
                 placeholderTextColor={theme.textSecondary}
                 value={password}
                 onChangeText={setPassword}
@@ -189,32 +213,48 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <Pressable
-            onPress={() => setRememberMe(!rememberMe)}
-            style={styles.rememberMeContainer}
-          >
+          <View style={styles.inputContainer}>
             <View
               style={[
-                styles.checkbox,
+                styles.inputWrapper,
                 {
-                  borderColor: rememberMe ? theme.primary : theme.border,
-                  backgroundColor: rememberMe
-                    ? theme.primary
-                    : "transparent",
+                  backgroundColor: theme.backgroundDefault,
+                  borderColor: theme.border,
                 },
               ]}
             >
-              {rememberMe ? (
-                <Feather name="check" size={14} color="#FFFFFF" />
-              ) : null}
+              <Feather
+                name="lock"
+                size={20}
+                color={theme.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.input, { color: theme.text }]}
+                placeholder="Confirm Password"
+                placeholderTextColor={theme.textSecondary}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Pressable
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather
+                  name={showConfirmPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </Pressable>
             </View>
-            <ThemedText type="body" style={styles.rememberMeText}>
-              {t.auth.rememberMe}
-            </ThemedText>
-          </Pressable>
+          </View>
 
           <AnimatedPressable
-            onPress={handleLogin}
+            onPress={handleSignup}
             onPressIn={() => {
               buttonScale.value = withSpring(0.96);
             }}
@@ -223,61 +263,26 @@ export default function LoginScreen() {
             }}
             disabled={isLoading}
             style={[
-              styles.loginButton,
+              styles.signupButton,
               { backgroundColor: theme.primary },
               animatedButtonStyle,
             ]}
           >
             <ThemedText
               type="body"
-              style={[styles.loginButtonText, { color: "#FFFFFF" }]}
+              style={[styles.signupButtonText, { color: "#FFFFFF" }]}
             >
-              {isLoading ? t.common.loading : t.auth.login}
+              {isLoading ? "Creating Account..." : "Sign Up"}
             </ThemedText>
           </AnimatedPressable>
 
-          <View style={styles.signupContainer}>
-            <ThemedText type="body">Don't have an account? </ThemedText>
-            <Pressable onPress={() => navigationProp.push("Signup")}>
+          <View style={styles.loginLink}>
+            <ThemedText type="body">Already have an account? </ThemedText>
+            <Pressable onPress={() => navigation.goBack()}>
               <ThemedText type="body" style={{ color: theme.primary, fontWeight: "600" }}>
-                Sign Up
+                Login
               </ThemedText>
             </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.languageContainer}>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {t.settings.language}:
-          </ThemedText>
-          <View style={styles.languageButtons}>
-            {(Object.keys(languageNames) as Language[]).map((lang) => (
-              <Pressable
-                key={lang}
-                onPress={() => handleLanguageChange(lang)}
-                style={[
-                  styles.languageButton,
-                  {
-                    backgroundColor:
-                      language === lang
-                        ? theme.primary
-                        : theme.backgroundDefault,
-                    borderColor:
-                      language === lang ? theme.primary : theme.border,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="small"
-                  style={{
-                    color: language === lang ? "#FFFFFF" : theme.text,
-                    fontWeight: language === lang ? "600" : "400",
-                  }}
-                >
-                  {languageNames[lang]}
-                </ThemedText>
-              </Pressable>
-            ))}
           </View>
         </View>
       </ScrollContainer>
@@ -298,26 +303,19 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
   },
   logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 16,
     marginBottom: Spacing.lg,
   },
   appName: {
-    marginBottom: Spacing.xs,
-  },
-  tagline: {
     textAlign: "center",
   },
   formContainer: {
     flex: 1,
-  },
-  welcomeText: {
-    marginBottom: Spacing["2xl"],
-    textAlign: "center",
   },
   inputContainer: {
     marginBottom: Spacing.lg,
@@ -341,52 +339,21 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: Spacing.xs,
   },
-  rememberMeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing["2xl"],
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.sm,
-  },
-  rememberMeText: {
-    flex: 1,
-  },
-  loginButton: {
+  signupButton: {
     height: Spacing.buttonHeight,
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: Spacing.lg,
   },
-  loginButtonText: {
+  signupButtonText: {
     fontWeight: "600",
     fontSize: 16,
   },
-  languageContainer: {
-    alignItems: "center",
-    marginTop: Spacing["3xl"],
-    paddingBottom: Spacing.xl,
-  },
-  languageButtons: {
-    flexDirection: "row",
-    marginTop: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  languageButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-  },
-  signupContainer: {
+  loginLink: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: Spacing.xl,
+    paddingBottom: Spacing.xl,
   },
 });

@@ -3,6 +3,7 @@ import { Language } from "@/constants/i18n";
 
 const STORAGE_KEYS = {
   AUTH: "@haajari/auth",
+  USERS: "@haajari/users",
   WORKERS: "@haajari/workers",
   ATTENDANCE: "@haajari/attendance",
   SETTINGS: "@haajari/settings",
@@ -12,6 +13,8 @@ const STORAGE_KEYS = {
 
 export interface AuthData {
   isLoggedIn: boolean;
+  userId: string;
+  userType: "admin" | "user";
   email: string;
   rememberMe: boolean;
 }
@@ -19,6 +22,21 @@ export interface AuthData {
 export interface ProfileData {
   name: string;
   avatarColor: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  address?: string;
+  avatarColor: string;
+  role: "user" | "premium" | "moderator";
+  isActive: boolean;
+  createdAt: number;
+  lastLogin?: number;
+  loginHistory: number[];
 }
 
 export interface Worker {
@@ -54,6 +72,7 @@ export interface Settings {
 }
 
 export const storage = {
+  // Auth methods
   async getAuth(): Promise<AuthData | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
@@ -79,6 +98,57 @@ export const storage = {
     }
   },
 
+  // User methods
+  async getUsers(): Promise<User[]> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async getUserById(userId: string): Promise<User | null> {
+    const users = await this.getUsers();
+    return users.find((u) => u.id === userId) || null;
+  },
+
+  async addUser(user: User): Promise<void> {
+    const users = await this.getUsers();
+    users.push(user);
+    await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+
+  async updateUser(updatedUser: User): Promise<void> {
+    const users = await this.getUsers();
+    const index = users.findIndex((u) => u.id === updatedUser.id);
+    if (index !== -1) {
+      users[index] = updatedUser;
+      await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    }
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    const users = await this.getUsers();
+    const filtered = users.filter((u) => u.id !== userId);
+    await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(filtered));
+  },
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const users = await this.getUsers();
+    return users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+  },
+
+  async recordUserLogin(userId: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (user) {
+      user.lastLogin = Date.now();
+      user.loginHistory = [...(user.loginHistory || []), Date.now()].slice(-20);
+      await this.updateUser(user);
+    }
+  },
+
+  // Language methods
   async getLanguage(): Promise<Language> {
     try {
       const lang = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
@@ -96,6 +166,7 @@ export const storage = {
     }
   },
 
+  // Worker methods
   async getWorkers(): Promise<Worker[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.WORKERS);
@@ -139,6 +210,7 @@ export const storage = {
     await this.setAttendance(filteredAttendance);
   },
 
+  // Attendance methods
   async getAttendance(): Promise<AttendanceRecord[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.ATTENDANCE);
@@ -184,6 +256,7 @@ export const storage = {
     return records.filter((r) => r.year === year && r.month === month);
   },
 
+  // Settings methods
   async getSettings(): Promise<Settings> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -211,6 +284,7 @@ export const storage = {
     }
   },
 
+  // Profile methods
   async getProfile(): Promise<ProfileData> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
