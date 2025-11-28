@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -124,9 +124,6 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = insets.bottom + 60;
-  const loadProfileCallback = useCallback(async () => {
-    await loadProfile();
-  }, []);
   
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
   const [user, setUser] = useState<User | null>(authUser || null);
@@ -229,12 +226,12 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     const data = await storage.getProfile();
     setProfile(data);
     setEditName(data.name);
     setSelectedColor(data.avatarColor);
-  };
+  }, []);
 
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
