@@ -117,8 +117,6 @@ function SettingItem({
 const LANGUAGES = [
   { code: "en" as Language, name: "English" },
   { code: "hi" as Language, name: "हिंदी" },
-  { code: "mr" as Language, name: "Marathi" },
-  { code: "gu" as Language, name: "Gujarati" },
 ];
 
 const THEMES = ["Light", "Dark", "System"];
