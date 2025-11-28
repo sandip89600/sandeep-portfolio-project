@@ -8,7 +8,6 @@ import {
   Modal,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
@@ -24,7 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
-import { storage, ProfileData } from "@/utils/storage";
+import { storage, ProfileData, User } from "@/utils/storage";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -117,18 +116,26 @@ const AVATAR_COLORS = [
 export default function SettingsScreen() {
   const { theme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
-  const { email, logout } = useAuth();
+  const { email, logout, user: authUser, userType, userId } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = insets.bottom + 60;
   
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
+  const [user, setUser] = useState<User | null>(authUser || null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     loadProfile();
+    if (userType === "user" && authUser) {
+      setUser(authUser);
+    }
   }, []);
 
   const loadProfile = async () => {
@@ -149,6 +156,50 @@ export default function SettingsScreen() {
       setShowEditModal(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Error", "Please fill all password fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+
+    if (userType === "admin") {
+      // For admin user
+      const adminPassword = "sandeep@7050";
+      if (oldPassword !== adminPassword) {
+        Alert.alert("Error", "Current password is incorrect");
+        return;
+      }
+      // In production, this would be updated in backend
+      Alert.alert("Success", "Password changed successfully");
+    } else if (userType === "user" && user) {
+      // For regular user
+      if (user.password !== oldPassword) {
+        Alert.alert("Error", "Current password is incorrect");
+        return;
+      }
+      const updatedUser = { ...user, password: newPassword };
+      await storage.updateUser(updatedUser);
+      setUser(updatedUser);
+      Alert.alert("Success", "Password changed successfully");
+    }
+
+    setShowPasswordModal(false);
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const openEditModal = () => {
@@ -215,6 +266,21 @@ export default function SettingsScreen() {
           </View>
           <Feather name="edit-3" size={20} color={theme.primary} />
         </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText
+          type="small"
+          style={[styles.sectionTitle, { color: theme.textSecondary }]}
+        >
+          SECURITY
+        </ThemedText>
+        <SettingsItem
+          icon="lock"
+          label="Change Password"
+          onPress={() => setShowPasswordModal(true)}
+          theme={theme}
+        />
       </View>
 
       <Modal
@@ -288,6 +354,102 @@ export default function SettingsScreen() {
                 style={[styles.modalButton, { backgroundColor: theme.primary }]}
               >
                 <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>Save</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showPasswordModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowPasswordModal(false)}
+        >
+          <View
+            style={[
+              styles.editModalContainer,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText type="h3" style={styles.modalTitle}>Change Password</ThemedText>
+            
+            <View style={styles.formGroup}>
+              <ThemedText type="body" style={styles.formLabel}>Current Password</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                    backgroundColor: theme.backgroundRoot,
+                  },
+                ]}
+                value={oldPassword}
+                onChangeText={setOldPassword}
+                placeholder="Enter current password"
+                secureTextEntry
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText type="body" style={styles.formLabel}>New Password</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                    backgroundColor: theme.backgroundRoot,
+                  },
+                ]}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Enter new password"
+                secureTextEntry
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText type="body" style={styles.formLabel}>Confirm Password</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                    backgroundColor: theme.backgroundRoot,
+                  },
+                ]}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm new password"
+                secureTextEntry
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+
+            <View style={styles.buttonRow}>
+              <Pressable
+                onPress={() => setShowPasswordModal(false)}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.border },
+                ]}
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleChangePassword}
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              >
+                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>Change</ThemedText>
               </Pressable>
             </View>
           </View>
@@ -400,9 +562,36 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.5,
   },
-  profileCard: {
+  settingsItem: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
+  },
+  settingsItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    gap: Spacing.md,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.xs,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  settingsItemRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  profileCardPressable: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: Spacing.lg,
     borderRadius: BorderRadius.sm,
   },
@@ -445,13 +634,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-  },
-  profileCardPressable: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
   },
   modalOverlay: {
     flex: 1,
@@ -501,36 +683,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.xs,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-  },
-  settingsItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-  },
-  settingsItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  settingsItemRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.xs,
-    justifyContent: "center",
-    alignItems: "center",
   },
   footer: {
     alignItems: "center",
-    marginTop: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.xl,
   },
 });
