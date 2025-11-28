@@ -16,8 +16,8 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 const ADMIN_CREDENTIALS = {
-  email: "haajri121",
-  password: "12345678",
+  email: "Sandeep7058",
+  password: "sandeep@7050",
 };
 
 const AVATAR_COLORS = [
