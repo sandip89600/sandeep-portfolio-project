@@ -13,7 +13,6 @@ import {
   useLanguageProvider,
 } from "@/hooks/useLanguage";
 import { AuthContext, useAuthProvider } from "@/hooks/useAuth";
-import { ThemeProvider } from "@/hooks/useThemeContext";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors } from "@/constants/theme";
 
@@ -48,9 +47,7 @@ export default function App() {
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.root}>
           <KeyboardProvider>
-            <ThemeProvider>
-              <AppContent />
-            </ThemeProvider>
+            <AppContent />
           </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>

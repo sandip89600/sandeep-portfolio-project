@@ -26,7 +26,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useTheme } from "@/hooks/useTheme";
-import { useThemeContext } from "@/hooks/useThemeContext";
+import { saveThemeMode } from "@/hooks/useThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
@@ -127,7 +127,7 @@ const WAGE_METHODS = ["Daily Wage", "Half Day", "Piece Rate"];
 const SESSION_TIMEOUTS = ["5 minutes", "15 minutes", "30 minutes", "1 hour"];
 
 export default function SettingsScreen() {
-  const { theme } = useTheme();
+  const { theme, themeMode } = useTheme();
   const { t, language, setLanguage } = useLanguage();
   const { email, logout, user: authUser, userType, userId } = useAuth();
   const insets = useSafeAreaInsets();
@@ -136,7 +136,7 @@ export default function SettingsScreen() {
 
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState("System");
+  const [selectedTheme, setSelectedTheme] = useState<string>(themeMode === "system" ? "System" : themeMode === "dark" ? "Dark" : "Light");
   const [selectedFontSize, setSelectedFontSize] = useState("Medium");
   const [selectedReminder, setSelectedReminder] = useState("Morning 9AM");
   const [selectedWageMethod, setSelectedWageMethod] = useState("Daily Wage");
@@ -168,6 +168,17 @@ export default function SettingsScreen() {
     const data = await storage.getProfile();
     setProfile(data);
   }, []);
+
+  const handleThemeChange = async (themeName: string) => {
+    setSelectedTheme(themeName);
+    setShowThemeModal(false);
+    const modeMap: Record<string, any> = {
+      "Light": "light",
+      "Dark": "dark",
+      "System": "system",
+    };
+    await saveThemeMode(modeMap[themeName]);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -652,10 +663,7 @@ export default function SettingsScreen() {
             {THEMES.map((t) => (
               <Pressable
                 key={t}
-                onPress={() => {
-                  setSelectedTheme(t);
-                  setShowThemeModal(false);
-                }}
+                onPress={() => handleThemeChange(t)}
                 style={[
                   styles.optionItem,
                   {
