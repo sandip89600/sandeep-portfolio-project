@@ -110,12 +110,7 @@ export default function AttendanceScreen() {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  let tabBarHeight = 0;
-  try {
-    tabBarHeight = useBottomTabBarHeight();
-  } catch {
-    tabBarHeight = insets.bottom;
-  }
+  const tabBarHeight = insets.bottom + 60;
 
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);

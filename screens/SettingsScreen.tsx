@@ -120,12 +120,7 @@ export default function SettingsScreen() {
   const { email, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  let tabBarHeight = insets.bottom;
-  try {
-    tabBarHeight = useBottomTabBarHeight();
-  } catch {
-    tabBarHeight = insets.bottom;
-  }
+  const tabBarHeight = insets.bottom + 60;
   
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
   const [showEditModal, setShowEditModal] = useState(false);
@@ -195,12 +190,13 @@ export default function SettingsScreen() {
         >
           {t.settings.profile.toUpperCase()}
         </ThemedText>
-        <Pressable onPress={openEditModal}>
+        <Pressable onPress={openEditModal} style={[styles.profileCardPressable, { backgroundColor: theme.backgroundDefault }]}>
           <View
-            style={[
-              styles.profileCard,
-              { backgroundColor: theme.backgroundDefault },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              flex: 1,
+            }}
           >
             <View
               style={[
@@ -216,8 +212,8 @@ export default function SettingsScreen() {
                 {email || "admin@haajari.com"}
               </ThemedText>
             </View>
-            <Feather name="edit-3" size={20} color={theme.primary} />
           </View>
+          <Feather name="edit-3" size={20} color={theme.primary} />
         </Pressable>
       </View>
 
@@ -450,9 +446,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
-  profileCard: {
-    ...styles.profileCard,
+  profileCardPressable: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.sm,
   },
   modalOverlay: {
     flex: 1,
