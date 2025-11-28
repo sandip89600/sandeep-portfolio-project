@@ -50,6 +50,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const buttonScale = useSharedValue(1);
 
@@ -70,6 +71,11 @@ export default function SignupScreen() {
 
     if (password.length < 6) {
       Alert.alert(t.common.error, "Password must be at least 6 characters");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      Alert.alert(t.common.error, "Please agree to Terms and Conditions");
       return;
     }
 
@@ -252,6 +258,36 @@ export default function SignupScreen() {
               </Pressable>
             </View>
           </View>
+
+          <Pressable
+            onPress={() => setAgreedToTerms(!agreedToTerms)}
+            style={styles.termsContainer}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                {
+                  borderColor: agreedToTerms ? theme.primary : theme.border,
+                  backgroundColor: agreedToTerms ? theme.primary : "transparent",
+                },
+              ]}
+            >
+              {agreedToTerms ? (
+                <Feather name="check" size={14} color="#FFFFFF" />
+              ) : null}
+            </View>
+            <View style={styles.termsText}>
+              <ThemedText type="body">I agree to the </ThemedText>
+              <Pressable onPress={() => navigation.navigate("TermsAndConditions")}>
+                <ThemedText
+                  type="body"
+                  style={{ color: theme.primary, fontWeight: "600" }}
+                >
+                  Terms & Conditions
+                </ThemedText>
+              </Pressable>
+            </View>
+          </Pressable>
 
           <AnimatedPressable
             onPress={handleSignup}

@@ -5,12 +5,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 import LoginScreen from "@/screens/LoginScreen";
 import SignupScreen from "@/screens/SignupScreen";
+import TermsAndConditionsScreen from "@/screens/TermsAndConditionsScreen";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 
 export type RootNavigatorParamList = {
   Login: undefined;
   Signup: undefined;
+  TermsAndConditions: undefined;
   Main: undefined;
 };
 
@@ -43,6 +45,7 @@ export default function RootNavigator() {
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
         </>
       )}
     </Stack.Navigator>
