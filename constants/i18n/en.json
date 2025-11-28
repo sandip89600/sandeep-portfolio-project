@@ -38,7 +38,10 @@
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this worker?",
     "noWorkers": "No workers yet",
-    "addFirst": "Tap + to add your first worker"
+    "addFirst": "Tap + to add your first worker",
+    "searchPlaceholder": "Search workers...",
+    "filterByCategory": "Filter by Category",
+    "allCategories": "All Categories"
   },
   "categories": {
     "labour": "Labour",
@@ -84,6 +87,26 @@
     "november": "November",
     "december": "December"
   },
+  "export": {
+    "title": "Export",
+    "pdf": "Export PDF",
+    "csv": "Export CSV",
+    "print": "Print Sheet",
+    "attendanceReport": "Attendance Report",
+    "summaryReport": "Payment Summary",
+    "generating": "Generating...",
+    "success": "Export successful",
+    "error": "Export failed",
+    "shareTitle": "Haajari Report",
+    "noDataToExport": "No data to export"
+  },
+  "history": {
+    "title": "Payment History",
+    "monthlyTrend": "Monthly Trend",
+    "totalPaid": "Total Paid",
+    "averagePerMonth": "Avg/Month",
+    "noHistory": "No payment history available"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -96,6 +119,10 @@
     "error": "Error",
     "success": "Success",
     "loading": "Loading...",
-    "currency": "Rs"
+    "currency": "Rs",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "share": "Share"
   }
 }

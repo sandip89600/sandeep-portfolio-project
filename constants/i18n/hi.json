@@ -38,7 +38,10 @@
     "delete": "हटाएं",
     "deleteConfirm": "क्या आप वाकई इस कामगार को हटाना चाहते हैं?",
     "noWorkers": "अभी तक कोई कामगार नहीं",
-    "addFirst": "+ टैप करके पहला कामगार जोड़ें"
+    "addFirst": "+ टैप करके पहला कामगार जोड़ें",
+    "searchPlaceholder": "कामगार खोजें...",
+    "filterByCategory": "श्रेणी से फ़िल्टर करें",
+    "allCategories": "सभी श्रेणियां"
   },
   "categories": {
     "labour": "मजदूर",
@@ -84,6 +87,26 @@
     "november": "नवंबर",
     "december": "दिसंबर"
   },
+  "export": {
+    "title": "निर्यात",
+    "pdf": "PDF निर्यात करें",
+    "csv": "CSV निर्यात करें",
+    "print": "शीट प्रिंट करें",
+    "attendanceReport": "हाजरी रिपोर्ट",
+    "summaryReport": "भुगतान सारांश",
+    "generating": "बना रहा है...",
+    "success": "निर्यात सफल",
+    "error": "निर्यात विफल",
+    "shareTitle": "हाजरी रिपोर्ट",
+    "noDataToExport": "निर्यात के लिए कोई डेटा नहीं"
+  },
+  "history": {
+    "title": "भुगतान इतिहास",
+    "monthlyTrend": "मासिक रुझान",
+    "totalPaid": "कुल भुगतान",
+    "averagePerMonth": "औसत/महीना",
+    "noHistory": "कोई भुगतान इतिहास उपलब्ध नहीं"
+  },
   "common": {
     "save": "सेव करें",
     "cancel": "रद्द करें",
@@ -96,6 +119,10 @@
     "error": "त्रुटि",
     "success": "सफल",
     "loading": "लोड हो रहा है...",
-    "currency": "रु"
+    "currency": "रु",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "clear": "साफ़",
+    "share": "साझा करें"
   }
 }
