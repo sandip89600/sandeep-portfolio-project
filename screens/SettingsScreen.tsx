@@ -134,11 +134,13 @@ export default function SettingsScreen() {
   const tabBarHeight = insets.bottom + 60;
 
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState("System");
   const [selectedFontSize, setSelectedFontSize] = useState("Medium");
   const [selectedReminder, setSelectedReminder] = useState("Morning 9AM");
   const [selectedWageMethod, setSelectedWageMethod] = useState("Daily Wage");
   const [selectedTimeout, setSelectedTimeout] = useState("15 minutes");
+  const [showProfileImageModal, setShowProfileImageModal] = useState(false);
 
   const [gpsEnabled, setGpsEnabled] = useState(false);
   const [photoVerification, setPhotoVerification] = useState(false);
@@ -222,6 +224,38 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const handlePickProfilePhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setProfileImage(result.assets[0].uri);
+      setShowProfileImageModal(false);
+      Alert.alert("Success", "Profile picture updated");
+    }
+  };
+
+  const handleTakeProfilePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setProfileImage(result.assets[0].uri);
+      setShowProfileImageModal(false);
+      Alert.alert("Success", "Profile picture updated");
+    }
+  };
+
+  const handleShareQR = () => {
+    Alert.alert("Share Profile QR", "QR code generated and ready to share");
+  };
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <ScreenScrollView
@@ -231,34 +265,109 @@ export default function SettingsScreen() {
           paddingHorizontal: Spacing.lg,
         }}
       >
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <ThemedText type="h2" style={styles.sectionTitle}>Profile</ThemedText>
-          <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-            <View style={styles.profileHeader}>
-              <View
+        {/* Profile Section - Modern Clean Design */}
+        <View style={styles.profileSection}>
+          <View style={[styles.profileCard, { backgroundColor: theme.backgroundDefault }]}>
+            {/* Avatar with Edit Icon */}
+            <View style={styles.avatarWrapper}>
+              <Pressable
+                onPress={() => setShowProfileImageModal(true)}
+                style={styles.avatarContainer}
+              >
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+                ) : (
+                  <View
+                    style={[
+                      styles.avatarPlaceholder,
+                      { backgroundColor: profile.avatarColor },
+                    ]}
+                  >
+                    <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
+                      {profile.name[0].toUpperCase()}
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => setShowProfileImageModal(true)}
                 style={[
-                  styles.largeAvatar,
-                  { backgroundColor: profile.avatarColor },
+                  styles.editIconButton,
+                  { backgroundColor: theme.primary },
                 ]}
               >
-                <ThemedText type="h1" style={{ color: "#FFFFFF" }}>
-                  {profile.name[0].toUpperCase()}
-                </ThemedText>
-              </View>
-              <View style={{ flex: 1, marginLeft: Spacing.lg }}>
-                <ThemedText type="h3">{profile.name}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {email}
+                <Feather name="edit-2" size={14} color="#FFFFFF" />
+              </Pressable>
+            </View>
+
+            {/* User Details */}
+            <View style={styles.userDetails}>
+              <ThemedText
+                type="h2"
+                style={[styles.userName, { fontWeight: "700" }]}
+              >
+                {profile.name}
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={[styles.userEmail, { color: theme.textSecondary }]}
+              >
+                {email}
+              </ThemedText>
+
+              {/* Role Badge */}
+              <View
+                style={[
+                  styles.roleBadge,
+                  { backgroundColor: theme.primary + "15", borderColor: theme.primary },
+                ]}
+              >
+                <ThemedText
+                  type="small"
+                  style={[styles.roleBadgeText, { color: theme.primary, fontWeight: "600" }]}
+                >
+                  {userType === "admin" ? "Admin" : "User"}
                 </ThemedText>
               </View>
             </View>
-            <Pressable style={[styles.button, { backgroundColor: theme.primary }]}>
-              <Feather name="edit-2" size={16} color="#FFFFFF" />
-              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.sm }}>
-                Edit Profile
-              </ThemedText>
-            </Pressable>
+
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+              <Pressable
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: theme.primary },
+                ]}
+              >
+                <Feather name="edit-3" size={16} color="#FFFFFF" />
+                <ThemedText
+                  type="body"
+                  style={{ color: "#FFFFFF", marginLeft: Spacing.sm, fontWeight: "600" }}
+                >
+                  Edit Profile
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={handleShareQR}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: theme.backgroundRoot,
+                    borderColor: theme.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <Feather name="share-2" size={16} color={theme.primary} />
+                <ThemedText
+                  type="body"
+                  style={{ color: theme.primary, marginLeft: Spacing.sm, fontWeight: "600" }}
+                >
+                  Share QR
+                </ThemedText>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -759,6 +868,61 @@ export default function SettingsScreen() {
         </Pressable>
       </Modal>
 
+      {/* Profile Image Modal */}
+      <Modal visible={showProfileImageModal} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowProfileImageModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <ThemedText type="h3" style={{ marginBottom: Spacing.lg }}>Update Profile Picture</ThemedText>
+
+            <Pressable
+              onPress={handleTakeProfilePhoto}
+              style={[styles.modalButton, { backgroundColor: theme.primary }]}
+            >
+              <Feather name="camera" size={18} color="#FFFFFF" />
+              <ThemedText type="body" style={{ color: "#FFFFFF", marginLeft: Spacing.md }}>
+                Take Photo
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePickProfilePhoto}
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor: theme.backgroundRoot,
+                  borderColor: theme.primary,
+                  borderWidth: 1,
+                  marginTop: Spacing.lg,
+                },
+              ]}
+            >
+              <Feather name="image" size={18} color={theme.primary} />
+              <ThemedText type="body" style={{ color: theme.primary, marginLeft: Spacing.md }}>
+                Choose from Gallery
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowProfileImageModal(false)}
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor: theme.backgroundRoot,
+                  borderColor: theme.border,
+                  borderWidth: 1,
+                  marginTop: Spacing.lg,
+                },
+              ]}
+            >
+              <ThemedText type="body" style={{ color: theme.text }}>Cancel</ThemedText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
       {/* Password Modal */}
       <Modal visible={showPasswordModal} transparent animationType="fade">
         <Pressable
@@ -828,6 +992,92 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  profileSection: {
+    marginBottom: Spacing["3xl"],
+    marginTop: -Spacing.lg,
+  },
+  profileCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing["2xl"],
+    alignItems: "center",
+  },
+  avatarWrapper: {
+    position: "relative",
+    marginBottom: Spacing["2xl"],
+  },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 50,
+  },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editIconButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  userDetails: {
+    alignItems: "center",
+    marginBottom: Spacing["2xl"],
+  },
+  userName: {
+    fontSize: 22,
+    marginBottom: Spacing.xs,
+    textAlign: "center",
+  },
+  userEmail: {
+    marginBottom: Spacing.lg,
+    textAlign: "center",
+  },
+  roleBadge: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  roleBadgeText: {
+    fontSize: 12,
+  },
+  actionButtons: {
+    width: "100%",
+    gap: Spacing.md,
+  },
+  primaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+  },
+  secondaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+  },
   section: {
     marginBottom: Spacing["2xl"],
   },
@@ -905,7 +1155,15 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    width: "100%",
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xs,
   },
   optionItem: {
     paddingVertical: Spacing.md,
