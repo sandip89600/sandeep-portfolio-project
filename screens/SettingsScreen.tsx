@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -123,6 +124,9 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = insets.bottom + 60;
+  const loadProfileCallback = useCallback(async () => {
+    await loadProfile();
+  }, []);
   
   const [profile, setProfile] = useState<ProfileData>({ name: "Admin", avatarColor: "#FF6B6B" });
   const [user, setUser] = useState<User | null>(authUser || null);
@@ -142,6 +146,12 @@ export default function SettingsScreen() {
       setUser(authUser);
     }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [])
+  );
 
   const requestCameraPermission = async () => {
     if (Platform.OS !== "web") {
@@ -227,16 +237,19 @@ export default function SettingsScreen() {
   };
 
   const handleSaveProfile = async () => {
-    if (editName.trim()) {
-      const updatedProfile: ProfileData = {
-        name: editName.trim(),
-        avatarColor: selectedColor || profile.avatarColor,
-      };
-      await storage.setProfile(updatedProfile);
-      setProfile(updatedProfile);
-      setShowEditModal(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (!editName.trim()) {
+      Alert.alert("Error", "Please enter a name");
+      return;
     }
+    const updatedProfile: ProfileData = {
+      name: editName.trim(),
+      avatarColor: selectedColor || profile.avatarColor,
+    };
+    await storage.setProfile(updatedProfile);
+    setProfile(updatedProfile);
+    setShowEditModal(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert("Success", "Profile updated successfully");
   };
 
   const handleChangePassword = async () => {
