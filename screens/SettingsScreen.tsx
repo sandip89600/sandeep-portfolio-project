@@ -62,45 +62,41 @@ const SettingItem = memo(
             onPress();
           }
         }}
-        onPressIn={() => (scale.value = withSpring(0.97))}
+        onPressIn={() => (scale.value = withSpring(0.98))}
         onPressOut={() => (scale.value = withSpring(1))}
         style={[
-          styles.settingItem,
+          styles.item,
           { backgroundColor: theme.backgroundDefault },
           animatedStyle,
         ]}
       >
-        <View style={styles.itemLeft}>
-          <View
-            style={[
-              styles.iconBox,
-              {
-                backgroundColor: isDestructive
-                  ? theme.error + "20"
-                  : theme.primary + "20",
-              },
-            ]}
-          >
-            <Feather
-              name={icon as any}
-              size={18}
-              color={isDestructive ? theme.error : theme.primary}
-            />
-          </View>
-          <ThemedText style={{ color: isDestructive ? theme.error : theme.text }}>
-            {label}
-          </ThemedText>
+        <View
+          style={[
+            styles.itemIcon,
+            {
+              backgroundColor: isDestructive
+                ? theme.error + "15"
+                : theme.primary + "15",
+            },
+          ]}
+        >
+          <Feather
+            name={icon as any}
+            size={18}
+            color={isDestructive ? theme.error : theme.primary}
+          />
         </View>
+        <ThemedText style={[styles.itemText, isDestructive && { color: theme.error }]}>
+          {label}
+        </ThemedText>
 
         <View style={styles.itemRight}>
           {value && (
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            <ThemedText style={styles.itemValue}>
               {value}
             </ThemedText>
           )}
-          {onPress && (
-            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
-          )}
+          <Feather name="chevron-right" size={18} color={theme.textSecondary} />
         </View>
       </AnimatedPressable>
     );
@@ -209,17 +205,16 @@ export default function SettingsScreen() {
   /* -------------------- UI -------------------- */
 
   return (
-    <ThemedView style={{ flex: 1 }}>
+    <ThemedView style={styles.container}>
       <ScreenScrollView
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.xl,
-          paddingBottom: insets.bottom + 80,
-          paddingHorizontal: Spacing.lg,
+          paddingTop: headerHeight + Spacing.lg,
+          paddingBottom: insets.bottom + Spacing.xl,
         }}
       >
-        {/* PROFILE */}
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <Pressable onPress={() => setShowImageModal(true)}>
+        {/* PROFILE CARD */}
+        <View style={[styles.header, { backgroundColor: theme.backgroundDefault }]}>
+          <Pressable onPress={() => setShowImageModal(true)} style={styles.avatarContainer}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.avatar} />
             ) : (
@@ -229,51 +224,73 @@ export default function SettingsScreen() {
                   { backgroundColor: profile.avatarColor },
                 ]}
               >
-                <ThemedText type="h1" style={{ color: "#fff" }}>
+                <ThemedText style={styles.avatarText}>
                   {profile?.name?.charAt(0)?.toUpperCase() || "A"}
                 </ThemedText>
               </View>
             )}
           </Pressable>
 
-          <ThemedText type="h2">{profile.name}</ThemedText>
-          <ThemedText type="small">{email}</ThemedText>
-          <ThemedText type="small">{userType}</ThemedText>
+          <ThemedText style={styles.userName}>{profile.name}</ThemedText>
+          <ThemedText style={styles.userEmail}>{email}</ThemedText>
         </View>
 
-        {/* PREFERENCES */}
-        <SettingItem
-          icon="sun"
-          label="Theme"
-          value={selectedTheme}
-          onPress={() => setShowThemeModal(true)}
-          theme={theme}
-        />
+        <View style={{ height: Spacing.xl }} />
 
-        <SettingItem
-          icon="globe"
-          label="Language"
-          value={languageNames[language]}
-          onPress={() => setShowLanguageModal(true)}
-          theme={theme}
-        />
-
-        {/* TOGGLE */}
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <View style={styles.row}>
-            <ThemedText>GPS Attendance</ThemedText>
-            <Switch value={gpsEnabled} onValueChange={setGpsEnabled} />
+        {/* APP SETTINGS */}
+        <View style={styles.section}>
+          <View style={styles.itemsContainer}>
+            <SettingItem
+              icon="sun"
+              label="Theme"
+              value={selectedTheme}
+              onPress={() => setShowThemeModal(true)}
+              theme={theme}
+            />
+            <SettingItem
+              icon="globe"
+              label="Language"
+              value={languageNames[language]}
+              onPress={() => setShowLanguageModal(true)}
+              theme={theme}
+            />
           </View>
         </View>
 
-        {/* DANGER */}
-        <SettingItem
-          icon="log-out"
-          label="Logout"
-          onPress={handleLogout}
-          theme={theme}
-          isDestructive
-        />
+        {/* FUNCTIONALITY */}
+        <View style={styles.section}>
+          <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.item}>
+              <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
+                <Feather name="map-pin" size={18} color={theme.primary} />
+              </View>
+              <ThemedText style={styles.itemText}>GPS Attendance</ThemedText>
+              <Switch 
+                value={gpsEnabled} 
+                onValueChange={setGpsEnabled}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* LOGOUT */}
+        <View style={styles.section}>
+          <View style={styles.itemsContainer}>
+            <SettingItem
+              icon="log-out"
+              label="Logout"
+              onPress={handleLogout}
+              theme={theme}
+              isDestructive
+            />
+          </View>
+        </View>
+
+        <View style={styles.versionContainer}>
+          <ThemedText style={styles.versionText}>Version 1.0.0</ThemedText>
+        </View>
       </ScreenScrollView>
 
       {/* THEME MODAL */}
@@ -328,51 +345,92 @@ export default function SettingsScreen() {
 /* -------------------- STYLES -------------------- */
 
 const styles = StyleSheet.create({
-  card: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
+  container: {
+    flex: 1,
+  },
+  header: {
     alignItems: "center",
+    paddingVertical: Spacing.xl * 1.5,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+  },
+  avatarContainer: {
+    marginBottom: Spacing.lg,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.md,
   },
-  settingItem: {
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 40,
+    fontWeight: "bold",
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: Spacing.xs,
+  },
+  userEmail: {
+    fontSize: 14,
+    opacity: 0.6,
+  },
+  section: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  itemsContainer: {
+    borderRadius: BorderRadius.xl,
+    overflow: "hidden",
+  },
+  item: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.sm,
+    alignItems: "center",
+    padding: Spacing.lg,
+    height: 64,
   },
-  itemLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  itemRight: { flexDirection: "row", alignItems: "center", gap: 6 },
-  iconBox: {
+  itemIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: Spacing.md,
   },
-  row: {
+  itemText: {
+    flex: 1,
+    fontSize: 17,
+  },
+  itemRight: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
+    alignItems: "center",
+  },
+  itemValue: {
+    fontSize: 16,
+    marginRight: Spacing.xs,
+    opacity: 0.5,
+  },
+  versionContainer: {
+    paddingVertical: Spacing.xl,
+    alignItems: "center",
+  },
+  versionText: {
+    fontSize: 12,
+    opacity: 0.3,
   },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-end",
   },
   modal: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    width: "80%",
-    gap: 16,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    paddingBottom: Spacing.xl * 2,
+    gap: Spacing.md,
   },
 });
