@@ -154,17 +154,6 @@ function UserTabs() {
         }}
       />
       <Tab.Screen
-        name="UserProfileTab"
-        component={UserProfileScreen}
-        options={{
-          title: "Profile",
-          headerTitle: "My Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="SettingsTab"
         component={SettingsScreen}
         options={{
