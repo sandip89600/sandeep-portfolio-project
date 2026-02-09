@@ -1,0 +1,7 @@
+@import "tailwindcss";
+*{
+    font-family: poppins,'sans-serif';
+}
+.Navbar{
+    background-color: #191919;
+}
