@@ -9,11 +9,9 @@ const Home = () => {
       <UserLeft/>
          </div>
       <div className="w-1/2 h-138">
-      <div className="border-6 w-90 h-90 rounded-full absolute top-43 right-40 border-orange-500">
-      </div>
-      <div className="border-6 w-94 h-94 rounded-full absolute top-41 right-38 border-neutral-800">
-      </div>
-        <img className='w-90 rounded-full ml-40 mt-20 ' src={images.hero} alt="" />
+ 
+ 
+        <img className='object-cover  hover:scale-105  w-90 rounded-full ml-40 mt-20 ring-8 ring-orange-500 shadow-[0_0_40px_rgba(255,138,0,0.35)] ' src={images.hero} alt="" />
       </div>
     </div>
   )

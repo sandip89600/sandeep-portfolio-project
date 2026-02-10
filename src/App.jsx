@@ -10,7 +10,7 @@ import Contact from './Pages/Contact'
 
 const App = () => {
   return (
-    <div className='bg-neutral-900 text-white w-screen h-screen'>
+    <div className='bg-linear-to-b from-[#0A0F1E] via-[#0E1630] to-[#121C3A] text-white w-screen h-screen'>
       <Navbar/>
       <Routes>
         <Route path='/' element={<Home/>}/>
