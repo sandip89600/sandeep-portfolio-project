@@ -4,16 +4,17 @@ import { FaLinkedinIn } from "react-icons/fa";
 import { FaGithub } from "react-icons/fa6";
 import { IoIosMail  } from "react-icons/io";
 import { IoMdCall } from "react-icons/io";
+import { UserInfo } from '../../assets/Data';
 const UserLeft = () => {
   return (
     <div>
         <p className="text-neutral-500">Hello</p>
               <h1 className="text-neutral-100 font-bold text-5xl mb-3">
   I'm{" "}
-  <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">Sandeep Pandit</span></h1>
+  <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">{UserInfo.Name}</span></h1>
 
-              <h3 className='text-neutral-100 font-bold text-4xl mb-3'>Full Stack Web Developer</h3>
-              <p class="text-neutral-500 font-bold m-5">Currently-learning Full Stack Web Developer with hands-on experience in frontend technologies and a proven track record of delivering impactful web solutions.</p>
+              <h3 className='text-neutral-100 font-bold text-4xl mb-3'>{UserInfo.Role}</h3>
+              <p class="text-neutral-500 font-bold ">{UserInfo.Description}</p>
          <Button/>
 
         <div className="flex gap-10">
