@@ -1,10 +1,11 @@
-import React from 'react'
-
+import React, { useState } from 'react'
+import ProjectHeader from '../Components/Project-header/ProjectHeader'
 const Projects = () => {
+
   return (
-    <div>
-      
-    </div>
+<>
+<ProjectHeader/>
+</>
   )
 }
 
