@@ -1,6 +1,6 @@
 import React from 'react'
 import { images } from '../assets/Data'
-import UserLeft from '../Components/User/userLeft'
+import UserLeft from '../Components/User/UserLeft'
 
 const Home = () => {
   return (
