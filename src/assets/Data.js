@@ -45,3 +45,48 @@ export const ProjectData = [
         link: "https://portfolio-project-my-daily-work.vercel.app/"
     }
 ]
+
+
+// ExperienceData.js
+
+export const ExperienceData = [
+  {
+    id: 1,
+    title: "Web Development Intern",
+    duration: "July 2024 - August 2024",
+    company: "My Daily Work Company",
+    achievements: [
+      "Developed responsive Personal Portfolio website using HTML, CSS, and JavaScript",
+      "Created engaging Landing Page with optimized user experience and conversion focus",
+      "Built functional Basic Calculator application demonstrating JavaScript proficiency",
+      "Collaborated with team to deliver projects within specified timelines"
+    ],
+    certificate: "https://www.sandeeppandit.shop/Post/index.html"
+  },
+  {
+    id: 2,
+    title: "Web Development Intern",
+    duration: "November 2024 - January 2025",
+    company: "Yhills Edutech Company",
+    achievements: [
+      "Designed and developed Personal Portfolio showcasing technical capabilities",
+      "Created Bootstrap-based e-commerce shopping website with responsive design",
+      "Implemented SEO best practices resulting in 40% improvement in search visibility",
+      "Contributed to 15% sales growth through optimized e-commerce site development"
+    ],
+    certificate: "https://www.sandeeppandit.shop/Post/post.html"
+  },
+  {
+    id: 3,
+    title: "Full Stack Web Development Program",
+    duration: "May 2025 - Present",
+    company: "A2Z ITHub",
+    achievements: [
+      "Currently enrolled in a comprehensive Full Stack Web Development Program",
+      "Learning and building projects using HTML, CSS, JavaScript, React, Node.js, Express, and MongoDB",
+      "Developing real-world web applications and responsive user interfaces",
+      "Expected completion: November 2025"
+    ],
+    certificate: "#"
+  }
+];
