@@ -200,7 +200,8 @@ export default function AttendanceScreen() {
     if (!isNaN(amount) && amount > 0) {
       markAttendance(amount);
     } else {
-      Alert.alert(t.common.error, "Please enter a valid amount");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(t.common.error, t.attendance.invalidAmount);
     }
   };
 

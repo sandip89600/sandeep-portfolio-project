@@ -248,14 +248,14 @@ export default function SettingsScreen() {
           <View style={styles.itemsContainer}>
             <SettingItem
               icon="sun"
-              label="Theme"
+              label={t.settings.theme}
               value={selectedTheme}
               onPress={() => setShowThemeModal(true)}
               theme={theme}
             />
             <SettingItem
               icon="globe"
-              label="Language"
+              label={t.settings.language}
               value={languageNames[language]}
               onPress={() => setShowLanguageModal(true)}
               theme={theme}
@@ -270,7 +270,7 @@ export default function SettingsScreen() {
               <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
                 <Feather name="map-pin" size={18} color={theme.primary} />
               </View>
-              <ThemedText style={styles.itemText}>GPS Attendance</ThemedText>
+              <ThemedText style={styles.itemText}>{t.settings.gpsAttendance}</ThemedText>
               <Switch 
                 value={gpsEnabled} 
                 onValueChange={setGpsEnabled}
@@ -291,14 +291,14 @@ export default function SettingsScreen() {
               ]}
             >
               <ThemedText style={{ fontWeight: "600", marginBottom: Spacing.sm, color: theme.primary }}>
-                Guest Mode
+                {t.settings.guestMode}
               </ThemedText>
               <ThemedText style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
-                Sign in to save your data and access all features.
+                {t.settings.guestModeDesc}
               </ThemedText>
               <SettingItem
                 icon="log-in"
-                label="Sign In / Sign Up"
+                label={t.settings.signIn}
                 onPress={handleLogout}
                 theme={theme}
               />
@@ -309,7 +309,7 @@ export default function SettingsScreen() {
             <View style={styles.itemsContainer}>
               <SettingItem
                 icon="log-out"
-                label="Logout"
+                label={t.settings.logout}
                 onPress={handleLogout}
                 theme={theme}
                 isDestructive
@@ -319,7 +319,7 @@ export default function SettingsScreen() {
         )}
 
         <View style={styles.versionContainer}>
-          <ThemedText style={styles.versionText}>Version 1.0.0</ThemedText>
+          <ThemedText style={styles.versionText}>{t.settings.version} 1.0.0</ThemedText>
         </View>
       </ScreenScrollView>
 

@@ -156,7 +156,7 @@ export default function LoginScreen() {
                   marginLeft: Spacing.sm,
                 }}
               >
-                User Login
+                {t.auth.userLogin}
               </ThemedText>
             </Pressable>
             <Pressable
@@ -182,7 +182,7 @@ export default function LoginScreen() {
                   marginLeft: Spacing.sm,
                 }}
               >
-                Admin Login
+                {t.auth.adminLogin}
               </ThemedText>
             </Pressable>
           </View>
@@ -305,10 +305,10 @@ export default function LoginScreen() {
 
           {loginType === "user" && (
             <View style={styles.signupContainer}>
-              <ThemedText type="body">Don't have an account? </ThemedText>
+              <ThemedText type="body">{t.auth.noAccount} </ThemedText>
               <Pressable onPress={() => navigationProp.push("Signup")}>
                 <ThemedText type="body" style={{ color: theme.primary, fontWeight: "600" }}>
-                  Sign Up
+                  {t.auth.signUp}
                 </ThemedText>
               </Pressable>
             </View>
@@ -326,7 +326,7 @@ export default function LoginScreen() {
               type="body"
               style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
             >
-              Browse as Guest
+              {t.auth.guestBrowse}
             </ThemedText>
           </Pressable>
         </View>

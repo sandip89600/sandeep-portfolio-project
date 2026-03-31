@@ -9,7 +9,13 @@
     "password": "पासवर्ड या पिन",
     "login": "लॉगिन",
     "rememberMe": "मुझे याद रखें",
-    "invalidCredentials": "गलत ईमेल या पासवर्ड"
+    "invalidCredentials": "गलत ईमेल या पासवर्ड",
+    "userLogin": "उपयोगकर्ता लॉगिन",
+    "adminLogin": "एडमिन लॉगिन",
+    "signUp": "साइन अप",
+    "noAccount": "खाता नहीं है?",
+    "guestBrowse": "अतिथि के रूप में ब्राउज़ करें",
+    "viewRules": "नियम देखने के लिए टैप करें"
   },
   "tabs": {
     "attendance": "हाजरी",
@@ -24,7 +30,8 @@
     "halfDay": "आ",
     "noWorkers": "अभी तक कोई कामगार नहीं जोड़ा",
     "addWorkerFirst": "हाजरी ट्रैक करने के लिए कामगार टैब से कामगार जोड़ें",
-    "tapToMark": "हाजरी लगाने के लिए टैप करें"
+    "tapToMark": "हाजरी लगाने के लिए टैप करें",
+    "invalidAmount": "कृपया एक वैध राशि दर्ज करें"
   },
   "workers": {
     "title": "कामगार",
@@ -33,6 +40,7 @@
     "name": "कामगार का नाम",
     "category": "श्रेणी",
     "dailyRate": "दैनिक दर",
+    "perDay": "/दिन",
     "save": "सेव करें",
     "cancel": "रद्द करें",
     "delete": "हटाएं",
@@ -41,7 +49,10 @@
     "addFirst": "+ टैप करके पहला कामगार जोड़ें",
     "searchPlaceholder": "कामगार खोजें...",
     "filterByCategory": "श्रेणी से फ़िल्टर करें",
-    "allCategories": "सभी श्रेणियां"
+    "allCategories": "सभी श्रेणियां",
+    "enterName": "कृपया कामगार का नाम दर्ज करें",
+    "enterRate": "कृपया एक वैध दैनिक दर दर्ज करें",
+    "saveFailed": "कामगार सहेजने में विफल"
   },
   "categories": {
     "labour": "मजदूर",
@@ -71,7 +82,27 @@
     "admin": "एडमिन",
     "logout": "लॉगआउट",
     "logoutConfirm": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
-    "defaultMonth": "डिफॉल्ट महीना व्यू"
+    "defaultMonth": "डिफॉल्ट महीना व्यू",
+    "theme": "थीम",
+    "gpsAttendance": "GPS हाजरी",
+    "version": "संस्करण",
+    "guestMode": "अतिथि मोड",
+    "guestModeDesc": "अपना डेटा सहेजने और सभी सुविधाओं तक पहुंचने के लिए साइन इन करें।",
+    "signIn": "साइन इन / साइन अप",
+    "appSettings": "ऐप सेटिंग्स",
+    "appearance": "दिखावट"
+  },
+  "admin": {
+    "dashboard": "एडमिन डैशबोर्ड",
+    "totalUsers": "कुल उपयोगकर्ता",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "loggedIn": "लॉग इन",
+    "searchUsers": "उपयोगकर्ता खोजें...",
+    "users": "उपयोगकर्ता",
+    "noUsersFound": "कोई उपयोगकर्ता नहीं मिला",
+    "deleteUser": "उपयोगकर्ता हटाएं",
+    "deleteConfirm": "हटाएं"
   },
   "months": {
     "january": "जनवरी",
@@ -98,7 +129,25 @@
     "success": "निर्यात सफल",
     "error": "निर्यात विफल",
     "shareTitle": "हाजरी रिपोर्ट",
-    "noDataToExport": "निर्यात के लिए कोई डेटा नहीं"
+    "noDataToExport": "निर्यात के लिए कोई डेटा नहीं",
+    "spreadsheet": "एक्सेल/स्प्रेडशीट"
+  },
+  "payment": {
+    "markPaid": "भुगतान करें",
+    "paid": "भुगतान किया",
+    "due": "बकाया",
+    "balance": "शेष",
+    "totalPaid": "कुल भुगतान",
+    "amountPaid": "भुगतान राशि",
+    "addPayment": "भुगतान जोड़ें",
+    "paymentAdded": "भुगतान दर्ज हुआ",
+    "paymentHistory": "भुगतान इतिहास",
+    "noPayments": "कोई भुगतान दर्ज नहीं",
+    "enterAmount": "भुगतान राशि दर्ज करें",
+    "fullAmount": "पूरी राशि",
+    "partialAmount": "आंशिक राशि",
+    "deletePayment": "भुगतान हटाएं",
+    "deletePaymentConfirm": "यह भुगतान रिकॉर्ड हटाएं?"
   },
   "history": {
     "title": "भुगतान इतिहास",

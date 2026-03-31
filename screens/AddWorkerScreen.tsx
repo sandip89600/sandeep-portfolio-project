@@ -103,13 +103,13 @@ export default function AddWorkerScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert(t.common.error, "Please enter worker name");
+      Alert.alert(t.common.error, t.workers.enterName);
       return;
     }
 
     const rate = parseFloat(dailyRate);
     if (isNaN(rate) || rate <= 0) {
-      Alert.alert(t.common.error, "Please enter a valid daily rate");
+      Alert.alert(t.common.error, t.workers.enterRate);
       return;
     }
 
@@ -142,7 +142,7 @@ export default function AddWorkerScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();
     } catch (error) {
-      Alert.alert(t.common.error, "Failed to save worker");
+      Alert.alert(t.common.error, t.workers.saveFailed);
     } finally {
       setIsLoading(false);
     }

@@ -52,7 +52,9 @@ export default function AdminDashboardScreen() {
       total: userList.length,
       active: userList.filter((u) => u.isActive).length,
       inactive: userList.filter((u) => !u.isActive).length,
-      loggedIn: userList.filter((u) => u.loginHistory && u.loginHistory.length > 0).length,
+      loggedIn: userList.filter(
+        (u) => u.loginHistory && u.loginHistory.length > 0
+      ).length,
     });
   };
 
@@ -73,10 +75,10 @@ export default function AdminDashboardScreen() {
   };
 
   const handleDeleteUser = (user: User) => {
-    Alert.alert("Delete User", `Delete ${user.name}?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t.admin.deleteUser, `${t.common.delete} ${user.name}?`, [
+      { text: t.common.cancel, style: "cancel" },
       {
-        text: "Delete",
+        text: t.admin.deleteConfirm,
         style: "destructive",
         onPress: async () => {
           await storage.deleteUser(user.id);
@@ -114,12 +116,7 @@ export default function AdminDashboardScreen() {
       ]}
     >
       <View style={styles.userInfo}>
-        <View
-          style={[
-            styles.avatar,
-            { backgroundColor: user.avatarColor },
-          ]}
-        >
+        <View style={[styles.avatar, { backgroundColor: user.avatarColor }]}>
           <ThemedText type="h3" style={{ color: "#FFFFFF" }}>
             {user.name[0].toUpperCase()}
           </ThemedText>
@@ -146,14 +143,11 @@ export default function AdminDashboardScreen() {
                   color: user.isActive ? theme.presentGreen : theme.error,
                 }}
               >
-                {user.isActive ? "Active" : "Inactive"}
+                {user.isActive ? t.admin.active : t.admin.inactive}
               </ThemedText>
             </View>
             <View
-              style={[
-                styles.badge,
-                { backgroundColor: theme.primary + "20" },
-              ]}
+              style={[styles.badge, { backgroundColor: theme.primary + "20" }]}
             >
               <ThemedText type="small" style={{ color: theme.primary }}>
                 {user.role}
@@ -169,7 +163,9 @@ export default function AdminDashboardScreen() {
           style={[
             styles.actionBtn,
             {
-              backgroundColor: user.isActive ? theme.error + "15" : theme.presentGreen + "15",
+              backgroundColor: user.isActive
+                ? theme.error + "15"
+                : theme.presentGreen + "15",
             },
           ]}
         >
@@ -199,17 +195,33 @@ export default function AdminDashboardScreen() {
         }}
       >
         <ThemedText type="h1" style={{ marginBottom: Spacing.lg }}>
-          Admin Dashboard
+          {t.admin.dashboard}
         </ThemedText>
 
         <View style={styles.statsContainer}>
-          <StatCard label="Total Users" value={stats.total} color={theme.primary} />
-          <StatCard label="Active" value={stats.active} color={theme.presentGreen} />
-          <StatCard label="Inactive" value={stats.inactive} color={theme.error} />
+          <StatCard
+            label={t.admin.totalUsers}
+            value={stats.total}
+            color={theme.primary}
+          />
+          <StatCard
+            label={t.admin.active}
+            value={stats.active}
+            color={theme.presentGreen}
+          />
+          <StatCard
+            label={t.admin.inactive}
+            value={stats.inactive}
+            color={theme.error}
+          />
         </View>
 
         <View style={styles.statsContainer}>
-          <StatCard label="Users Logged In" value={stats.loggedIn} color={theme.primary + "dd"} />
+          <StatCard
+            label={t.admin.loggedIn}
+            value={stats.loggedIn}
+            color={theme.primary + "dd"}
+          />
         </View>
 
         <View
@@ -224,7 +236,7 @@ export default function AdminDashboardScreen() {
           <Feather name="search" size={20} color={theme.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Search users..."
+            placeholder={t.admin.searchUsers}
             placeholderTextColor={theme.textSecondary}
             value={searchQuery}
             onChangeText={handleSearch}
@@ -235,7 +247,7 @@ export default function AdminDashboardScreen() {
           type="h3"
           style={[styles.sectionTitle, { color: theme.textSecondary }]}
         >
-          Users ({filteredUsers.length})
+          {t.admin.users} ({filteredUsers.length})
         </ThemedText>
 
         <FlatList
@@ -253,7 +265,7 @@ export default function AdminDashboardScreen() {
                 color: theme.textSecondary,
               }}
             >
-              No users found
+              {t.admin.noUsersFound}
             </ThemedText>
           }
         />

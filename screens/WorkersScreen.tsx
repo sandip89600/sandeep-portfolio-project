@@ -103,7 +103,7 @@ function WorkerCard({
               </ThemedText>
             </View>
             <ThemedText type="body" style={styles.rateText}>
-              {t.common.currency} {worker.dailyRate}/day
+              {t.common.currency} {worker.dailyRate}{t.workers.perDay}
             </ThemedText>
           </View>
         </View>

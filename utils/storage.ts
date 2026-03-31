@@ -73,7 +73,21 @@ export interface Settings {
   defaultYear: number;
 }
 
+export interface PaymentRecord {
+  id: string;
+  workerId: string;
+  year: number;
+  month: number;
+  amount: number;
+  paidAt: number;
+  note?: string;
+}
+
 export type ThemeMode = "light" | "dark" | "system";
+
+const STORAGE_KEYS_EXT = {
+  PAYMENTS: "@haajari/payments",
+};
 
 export const storage = {
   // Auth methods
@@ -314,9 +328,54 @@ export const storage = {
     }
   },
 
+  // Payment methods
+  async getPayments(): Promise<PaymentRecord[]> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS_EXT.PAYMENTS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async addPayment(payment: PaymentRecord): Promise<void> {
+    try {
+      const payments = await this.getPayments();
+      payments.push(payment);
+      await AsyncStorage.setItem(STORAGE_KEYS_EXT.PAYMENTS, JSON.stringify(payments));
+    } catch (error) {
+      console.error("Error saving payment:", error);
+    }
+  },
+
+  async deletePayment(paymentId: string): Promise<void> {
+    try {
+      const payments = await this.getPayments();
+      const filtered = payments.filter((p) => p.id !== paymentId);
+      await AsyncStorage.setItem(STORAGE_KEYS_EXT.PAYMENTS, JSON.stringify(filtered));
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+    }
+  },
+
+  async getPaymentsForMonth(year: number, month: number): Promise<PaymentRecord[]> {
+    const payments = await this.getPayments();
+    return payments.filter((p) => p.year === year && p.month === month);
+  },
+
+  async getPaymentsForWorkerMonth(workerId: string, year: number, month: number): Promise<PaymentRecord[]> {
+    const payments = await this.getPayments();
+    return payments.filter(
+      (p) => p.workerId === workerId && p.year === year && p.month === month
+    );
+  },
+
   async clearAll(): Promise<void> {
     try {
-      await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
+      await AsyncStorage.multiRemove([
+        ...Object.values(STORAGE_KEYS),
+        STORAGE_KEYS_EXT.PAYMENTS,
+      ]);
     } catch (error) {
       console.error("Error clearing storage:", error);
     }
