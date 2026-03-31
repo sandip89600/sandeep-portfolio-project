@@ -3,13 +3,15 @@ import { storage, AuthData, User, generateId } from "@/utils/storage";
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  isGuest: boolean;
   isLoading: boolean;
   userId: string;
-  userType: "admin" | "user";
+  userType: "admin" | "user" | "guest";
   email: string;
   user: User | null;
   login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
   signup: (email: string, password: string, name: string, phone?: string) => Promise<boolean>;
+  loginAsGuest: () => void;
   logout: () => Promise<void>;
 }
 
@@ -21,14 +23,15 @@ const ADMIN_CREDENTIALS = {
 };
 
 const AVATAR_COLORS = [
-  "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA15E"
+  "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA15E",
 ];
 
 export function useAuthProvider() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState("");
-  const [userType, setUserType] = useState<"admin" | "user">("user");
+  const [userType, setUserType] = useState<"admin" | "user" | "guest">("user");
   const [email, setEmail] = useState("");
   const [user, setUser] = useState<User | null>(null);
 
@@ -42,7 +45,7 @@ export function useAuthProvider() {
       if (auth?.isLoggedIn && auth?.rememberMe) {
         setIsLoggedIn(true);
         setUserId(auth.userId);
-        setUserType(auth.userType);
+        setUserType(auth.userType as any);
         setEmail(auth.email);
         if (auth.userType === "user") {
           const userData = await storage.getUserById(auth.userId);
@@ -55,14 +58,9 @@ export function useAuthProvider() {
   };
 
   const login = useCallback(
-    async (
-      inputEmail: string,
-      password: string,
-      rememberMe: boolean
-    ): Promise<boolean> => {
+    async (inputEmail: string, password: string, rememberMe: boolean): Promise<boolean> => {
       const emailLower = inputEmail.toLowerCase().trim();
 
-      // Check admin credentials
       if (
         emailLower === ADMIN_CREDENTIALS.email &&
         password === ADMIN_CREDENTIALS.password
@@ -76,13 +74,13 @@ export function useAuthProvider() {
         };
         await storage.setAuth(authData);
         setIsLoggedIn(true);
+        setIsGuest(false);
         setUserId("admin");
         setUserType("admin");
         setEmail(emailLower);
         return true;
       }
 
-      // Check user credentials
       const userData = await storage.getUserByEmail(emailLower);
       if (userData && userData.password === password && userData.isActive) {
         await storage.recordUserLogin(userData.id);
@@ -95,6 +93,7 @@ export function useAuthProvider() {
         };
         await storage.setAuth(authData);
         setIsLoggedIn(true);
+        setIsGuest(false);
         setUserId(userData.id);
         setUserType("user");
         setEmail(emailLower);
@@ -108,29 +107,17 @@ export function useAuthProvider() {
   );
 
   const signup = useCallback(
-    async (
-      inputEmail: string,
-      password: string,
-      name: string,
-      phone?: string
-    ): Promise<boolean> => {
+    async (inputEmail: string, password: string, name: string, phone?: string): Promise<boolean> => {
       const emailLower = inputEmail.toLowerCase().trim();
 
-      // Check if email already exists
       const existingUser = await storage.getUserByEmail(emailLower);
-      if (existingUser) {
-        return false;
-      }
+      if (existingUser) return false;
 
-      // Check if phone already exists (if provided)
       if (phone) {
         const existingPhone = await storage.getUserByPhone(phone);
-        if (existingPhone) {
-          return false;
-        }
+        if (existingPhone) return false;
       }
 
-      // Create new user
       const newUser: User = {
         id: generateId(),
         email: emailLower,
@@ -148,7 +135,6 @@ export function useAuthProvider() {
 
       await storage.addUser(newUser);
 
-      // Auto login
       const authData: AuthData = {
         isLoggedIn: true,
         userId: newUser.id,
@@ -158,6 +144,7 @@ export function useAuthProvider() {
       };
       await storage.setAuth(authData);
       setIsLoggedIn(true);
+      setIsGuest(false);
       setUserId(newUser.id);
       setUserType("user");
       setEmail(emailLower);
@@ -168,9 +155,18 @@ export function useAuthProvider() {
     []
   );
 
+  const loginAsGuest = useCallback(() => {
+    setIsGuest(true);
+    setIsLoggedIn(false);
+    setUserId("guest");
+    setUserType("guest");
+    setEmail("guest@preview.com");
+  }, []);
+
   const logout = useCallback(async () => {
     await storage.clearAuth();
     setIsLoggedIn(false);
+    setIsGuest(false);
     setUserId("");
     setUserType("user");
     setEmail("");
@@ -179,6 +175,7 @@ export function useAuthProvider() {
 
   return {
     isLoggedIn,
+    isGuest,
     isLoading,
     userId,
     userType,
@@ -186,6 +183,7 @@ export function useAuthProvider() {
     user,
     login,
     signup,
+    loginAsGuest,
     logout,
   };
 }

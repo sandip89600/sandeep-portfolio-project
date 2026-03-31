@@ -41,7 +41,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 export default function LoginScreen() {
   const navigationProp = useNavigation<LoginScreenNavigationProp>();
   const { theme } = useTheme();
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
 
@@ -313,6 +313,22 @@ export default function LoginScreen() {
               </Pressable>
             </View>
           )}
+
+          <Pressable
+            onPress={loginAsGuest}
+            style={[
+              styles.skipButton,
+              { borderColor: theme.border },
+            ]}
+          >
+            <Feather name="eye" size={16} color={theme.textSecondary} />
+            <ThemedText
+              type="body"
+              style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
+            >
+              Browse as Guest
+            </ThemedText>
+          </Pressable>
         </View>
 
         <View style={styles.languageContainer}>
@@ -476,6 +492,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+  },
+  skipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.xs,
     borderWidth: 1,

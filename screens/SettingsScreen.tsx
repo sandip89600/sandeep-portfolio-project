@@ -26,7 +26,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useTheme } from "@/hooks/useTheme";
-import { saveThemeMode } from "@/hooks/useThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
@@ -114,16 +113,16 @@ const LANGUAGES = [
 /* -------------------- SCREEN -------------------- */
 
 export default function SettingsScreen() {
-  const { theme, themeMode } = useTheme();
-  const { email, logout, user, userType } = useAuth();
+  const { theme, themeMode, setThemeMode } = useTheme();
+  const { email, logout, user, userType, isGuest } = useAuth();
   const { language, setLanguage } = useLanguage();
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
   const [profile, setProfile] = useState<ProfileData>({
-    name: "Admin",
-    avatarColor: "#FF6B6B",
+    name: isGuest ? "Guest" : "Admin",
+    avatarColor: isGuest ? "#9BA1A6" : "#FF6B6B",
   });
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -170,9 +169,12 @@ export default function SettingsScreen() {
   const changeTheme = async (value: string) => {
     setSelectedTheme(value);
     setShowThemeModal(false);
-
-    const map: any = { Light: "light", Dark: "dark", System: "system" };
-    await saveThemeMode(map[value]);
+    const map: Record<string, "light" | "dark" | "system"> = {
+      Light: "light",
+      Dark: "dark",
+      System: "system",
+    };
+    await setThemeMode(map[value]);
   };
 
   const pickImage = async (camera = false) => {
@@ -190,6 +192,10 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
+    if (isGuest) {
+      logout();
+      return;
+    }
     Alert.alert("Logout", "Are you sure?", [
       { text: "Cancel" },
       {
@@ -275,18 +281,42 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* LOGOUT */}
-        <View style={styles.section}>
-          <View style={styles.itemsContainer}>
-            <SettingItem
-              icon="log-out"
-              label="Logout"
-              onPress={handleLogout}
-              theme={theme}
-              isDestructive
-            />
+        {/* GUEST SIGN IN PROMPT */}
+        {isGuest ? (
+          <View style={[styles.section]}>
+            <View
+              style={[
+                styles.itemsContainer,
+                { backgroundColor: theme.primary + "15", borderRadius: BorderRadius.xl, padding: Spacing.xl },
+              ]}
+            >
+              <ThemedText style={{ fontWeight: "600", marginBottom: Spacing.sm, color: theme.primary }}>
+                Guest Mode
+              </ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
+                Sign in to save your data and access all features.
+              </ThemedText>
+              <SettingItem
+                icon="log-in"
+                label="Sign In / Sign Up"
+                onPress={handleLogout}
+                theme={theme}
+              />
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.section}>
+            <View style={styles.itemsContainer}>
+              <SettingItem
+                icon="log-out"
+                label="Logout"
+                onPress={handleLogout}
+                theme={theme}
+                isDestructive
+              />
+            </View>
+          </View>
+        )}
 
         <View style={styles.versionContainer}>
           <ThemedText style={styles.versionText}>Version 1.0.0</ThemedText>

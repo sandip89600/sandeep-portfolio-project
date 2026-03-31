@@ -19,18 +19,18 @@ export type RootNavigatorParamList = {
 const Stack = createNativeStackNavigator<RootNavigatorParamList>();
 
 export default function RootNavigator() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isGuest, isLoading } = useAuth();
   const { theme, isDark } = useTheme();
 
   if (isLoading) {
     return (
-      <View
-        style={[styles.loading, { backgroundColor: theme.backgroundRoot }]}
-      >
+      <View style={[styles.loading, { backgroundColor: theme.backgroundRoot }]}>
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
+
+  const hasAccess = isLoggedIn || isGuest;
 
   return (
     <Stack.Navigator
@@ -39,13 +39,16 @@ export default function RootNavigator() {
         headerShown: false,
       }}
     >
-      {isLoggedIn ? (
+      {hasAccess ? (
         <Stack.Screen name="Main" component={MainTabNavigator} />
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
-          <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+          <Stack.Screen
+            name="TermsAndConditions"
+            component={TermsAndConditionsScreen}
+          />
         </>
       )}
     </Stack.Navigator>

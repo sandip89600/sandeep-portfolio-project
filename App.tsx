@@ -8,15 +8,12 @@ import { StatusBar } from "expo-status-bar";
 
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import {
-  LanguageContext,
-  useLanguageProvider,
-} from "@/hooks/useLanguage";
+import { LanguageContext, useLanguageProvider } from "@/hooks/useLanguage";
 import { AuthContext, useAuthProvider } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { Colors } from "@/constants/theme";
 
-function AppContent() {
+function AppInner() {
   const languageContext = useLanguageProvider();
   const authContext = useAuthProvider();
   const { theme, isDark } = useTheme();
@@ -47,7 +44,9 @@ export default function App() {
       <SafeAreaProvider>
         <GestureHandlerRootView style={styles.root}>
           <KeyboardProvider>
-            <AppContent />
+            <ThemeProvider>
+              <AppInner />
+            </ThemeProvider>
           </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
