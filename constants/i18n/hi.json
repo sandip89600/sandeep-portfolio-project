@@ -31,7 +31,13 @@
     "noWorkers": "अभी तक कोई कामगार नहीं जोड़ा",
     "addWorkerFirst": "हाजरी ट्रैक करने के लिए कामगार टैब से कामगार जोड़ें",
     "tapToMark": "हाजरी लगाने के लिए टैप करें",
-    "invalidAmount": "कृपया एक वैध राशि दर्ज करें"
+    "invalidAmount": "कृपया एक वैध राशि दर्ज करें",
+    "markFor": "हाजरी लगाएं",
+    "captureGPS": "GPS स्थान लें",
+    "gpsCapturing": "स्थान मिल रहा है...",
+    "gpsCaptured": "स्थान सेव हुआ",
+    "gpsFailed": "स्थान नहीं मिला",
+    "gpsOptional": "GPS स्थान वैकल्पिक है"
   },
   "workers": {
     "title": "कामगार",
@@ -52,7 +58,18 @@
     "allCategories": "सभी श्रेणियां",
     "enterName": "कृपया कामगार का नाम दर्ज करें",
     "enterRate": "कृपया एक वैध दैनिक दर दर्ज करें",
-    "saveFailed": "कामगार सहेजने में विफल"
+    "saveFailed": "कामगार सहेजने में विफल",
+    "phone": "फ़ोन नंबर",
+    "phonePlaceholder": "जैसे 9876543210",
+    "address": "पता",
+    "addressPlaceholder": "गांव / शहर",
+    "notes": "नोट्स",
+    "notesPlaceholder": "अतिरिक्त जानकारी...",
+    "addPhoto": "फ़ोटो जोड़ें",
+    "changePhoto": "फ़ोटो बदलें",
+    "optional": "वैकल्पिक",
+    "contactInfo": "संपर्क जानकारी",
+    "additionalInfo": "अतिरिक्त जानकारी"
   },
   "categories": {
     "labour": "मजदूर",
@@ -85,12 +102,33 @@
     "defaultMonth": "डिफॉल्ट महीना व्यू",
     "theme": "थीम",
     "gpsAttendance": "GPS हाजरी",
+    "gpsAttendanceDesc": "हाजरी लगाते समय स्थान रिकॉर्ड करें",
     "version": "संस्करण",
     "guestMode": "अतिथि मोड",
     "guestModeDesc": "अपना डेटा सहेजने और सभी सुविधाओं तक पहुंचने के लिए साइन इन करें।",
     "signIn": "साइन इन / साइन अप",
     "appSettings": "ऐप सेटिंग्स",
-    "appearance": "दिखावट"
+    "appearance": "दिखावट",
+    "notifications": "सूचनाएं",
+    "attendanceReminder": "दैनिक हाजरी रिमाइंडर",
+    "attendanceReminderDesc": "हर दिन हाजरी लगाने की याद दिलाएं",
+    "reminderTime": "रिमाइंडर समय",
+    "salaryReminder": "महीने के अंत का वेतन रिमाइंडर",
+    "salaryReminderDesc": "महीने के अंत में वेतन करने की याद दिलाएं"
+  },
+  "gps": {
+    "permissionDenied": "स्थान अनुमति अस्वीकृत",
+    "permissionRequired": "GPS हाजरी के लिए स्थान एक्सेस आवश्यक है",
+    "openSettings": "सेटिंग्स खोलें",
+    "outsideZone": "आप कार्यस्थल क्षेत्र के बाहर हैं",
+    "locationSaved": "GPS स्थान हाजरी के साथ सेव हुआ"
+  },
+  "notifications": {
+    "permissionDenied": "सूचना अनुमति अस्वीकृत",
+    "permissionRequired": "रिमाइंडर पाने के लिए सूचनाओं की अनुमति दें",
+    "openSettings": "सेटिंग्स खोलें",
+    "enabled": "सक्रिय",
+    "disabled": "निष्क्रिय"
   },
   "admin": {
     "dashboard": "एडमिन डैशबोर्ड",

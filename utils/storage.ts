@@ -46,6 +46,10 @@ export interface Worker {
   name: string;
   category: WorkerCategory;
   dailyRate: number;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  photoUri?: string;
   createdAt: number;
 }
 
@@ -66,6 +70,8 @@ export interface AttendanceRecord {
   month: number;
   day: number;
   value: AttendanceValue;
+  location?: { latitude: number; longitude: number; accuracy?: number };
+  timestamp?: number;
 }
 
 export interface Settings {
@@ -87,7 +93,15 @@ export type ThemeMode = "light" | "dark" | "system";
 
 const STORAGE_KEYS_EXT = {
   PAYMENTS: "@haajari/payments",
+  NOTIFICATION_SETTINGS: "@haajari/notification_settings",
 };
+
+export interface NotificationSettings {
+  attendanceReminderEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
+  salaryReminderEnabled: boolean;
+}
 
 export const storage = {
   // Auth methods
@@ -368,6 +382,15 @@ export const storage = {
     return payments.filter(
       (p) => p.workerId === workerId && p.year === year && p.month === month
     );
+  },
+
+  async getNotificationSettings(): Promise<NotificationSettings | null> {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS_EXT.NOTIFICATION_SETTINGS);
+    return data ? JSON.parse(data) : null;
+  },
+
+  async setNotificationSettings(settings: NotificationSettings): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS_EXT.NOTIFICATION_SETTINGS, JSON.stringify(settings));
   },
 
   async clearAll(): Promise<void> {

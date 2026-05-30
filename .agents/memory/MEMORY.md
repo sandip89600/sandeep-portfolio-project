@@ -1,0 +1,5 @@
+- [Expo notifications web compat](expo-notifications-web.md) — expo-notifications needs a `.web.ts` stub to prevent Metro bundling failures on web
+- [Expo package versions](expo-package-versions.md) — expo-location and expo-notifications must match SDK 54 expected versions (~19.0.8 and ~0.32.17 respectively)
+- [App.tsx structure](apptsx-structure.md) — ErrorBoundary MUST be inside ThemeProvider; ThemeProvider returns null while loading
+- [Worker storage architecture](worker-storage.md) — Worker has phone/address/notes/photoUri fields; AttendanceRecord has optional GPS location + timestamp
+- [i18n type system](i18n-types.md) — TranslationKeys is inferred from `typeof en`, so JSON additions auto-propagate to TypeScript types

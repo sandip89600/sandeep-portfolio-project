@@ -31,7 +31,13 @@
     "noWorkers": "No workers added yet",
     "addWorkerFirst": "Add workers from the Workers tab to start tracking attendance",
     "tapToMark": "Tap cell to mark attendance",
-    "invalidAmount": "Please enter a valid amount"
+    "invalidAmount": "Please enter a valid amount",
+    "markFor": "Mark Attendance",
+    "captureGPS": "Capture GPS Location",
+    "gpsCapturing": "Getting location...",
+    "gpsCaptured": "Location captured",
+    "gpsFailed": "Could not get location",
+    "gpsOptional": "GPS location is optional"
   },
   "workers": {
     "title": "Workers",
@@ -52,7 +58,18 @@
     "allCategories": "All Categories",
     "enterName": "Please enter worker name",
     "enterRate": "Please enter a valid daily rate",
-    "saveFailed": "Failed to save worker"
+    "saveFailed": "Failed to save worker",
+    "phone": "Phone Number",
+    "phonePlaceholder": "e.g. 9876543210",
+    "address": "Address",
+    "addressPlaceholder": "Village / City",
+    "notes": "Notes",
+    "notesPlaceholder": "Any additional info...",
+    "addPhoto": "Add Photo",
+    "changePhoto": "Change Photo",
+    "optional": "Optional",
+    "contactInfo": "Contact Info",
+    "additionalInfo": "Additional Info"
   },
   "categories": {
     "labour": "Labour",
@@ -85,12 +102,33 @@
     "defaultMonth": "Default Month View",
     "theme": "Theme",
     "gpsAttendance": "GPS Attendance",
+    "gpsAttendanceDesc": "Capture location when marking attendance",
     "version": "Version",
     "guestMode": "Guest Mode",
     "guestModeDesc": "Sign in to save your data and access all features.",
     "signIn": "Sign In / Sign Up",
     "appSettings": "App Settings",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "attendanceReminder": "Daily Attendance Reminder",
+    "attendanceReminderDesc": "Get reminded to mark attendance every day",
+    "reminderTime": "Reminder Time",
+    "salaryReminder": "Month-End Salary Reminder",
+    "salaryReminderDesc": "Reminder to process payments at month end"
+  },
+  "gps": {
+    "permissionDenied": "Location permission denied",
+    "permissionRequired": "Location access is required for GPS attendance",
+    "openSettings": "Open Settings",
+    "outsideZone": "You are outside the work site zone",
+    "locationSaved": "GPS location saved with attendance"
+  },
+  "notifications": {
+    "permissionDenied": "Notification permission denied",
+    "permissionRequired": "Allow notifications to receive reminders",
+    "openSettings": "Open Settings",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "admin": {
     "dashboard": "Admin Dashboard",

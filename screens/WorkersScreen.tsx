@@ -5,6 +5,7 @@ import {
   Pressable,
   Alert,
   FlatList,
+  Image,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -65,40 +66,39 @@ function WorkerCard({
     return colors[category] || theme.primary;
   };
 
+  const initials = worker.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
       <AnimatedPressable
         onPress={onEdit}
-        onPressIn={() => {
-          scale.value = withSpring(0.98);
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1);
-        }}
-        style={[
-          styles.workerCard,
-          { backgroundColor: theme.backgroundDefault },
-          animatedStyle,
-        ]}
+        onPressIn={() => { scale.value = withSpring(0.98); }}
+        onPressOut={() => { scale.value = withSpring(1); }}
+        style={[styles.workerCard, { backgroundColor: theme.backgroundDefault }, animatedStyle]}
       >
+        {/* Avatar */}
+        {worker.photoUri ? (
+          <Image source={{ uri: worker.photoUri }} style={styles.workerAvatar} />
+        ) : (
+          <View style={[styles.workerAvatarPlaceholder, { backgroundColor: getCategoryColor(worker.category) + "25" }]}>
+            <ThemedText style={[styles.workerAvatarInitials, { color: getCategoryColor(worker.category) }]}>
+              {initials}
+            </ThemedText>
+          </View>
+        )}
+
         <View style={styles.workerInfo}>
           <ThemedText type="h3" style={styles.workerName}>
             {worker.name}
           </ThemedText>
           <View style={styles.workerDetails}>
-            <View
-              style={[
-                styles.categoryBadge,
-                { backgroundColor: getCategoryColor(worker.category) + "20" },
-              ]}
-            >
-              <ThemedText
-                type="small"
-                style={[
-                  styles.categoryText,
-                  { color: getCategoryColor(worker.category) },
-                ]}
-              >
+            <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(worker.category) + "20" }]}>
+              <ThemedText type="small" style={[styles.categoryText, { color: getCategoryColor(worker.category) }]}>
                 {t.categories[worker.category]}
               </ThemedText>
             </View>
@@ -106,22 +106,25 @@ function WorkerCard({
               {t.common.currency} {worker.dailyRate}{t.workers.perDay}
             </ThemedText>
           </View>
+          {worker.phone ? (
+            <View style={styles.phoneRow}>
+              <Feather name="phone" size={11} color={theme.textSecondary} />
+              <ThemedText type="small" style={[styles.phoneText, { color: theme.textSecondary }]}>
+                {worker.phone}
+              </ThemedText>
+            </View>
+          ) : null}
         </View>
+
         <View style={styles.workerActions}>
           <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onEdit();
-            }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onEdit(); }}
             style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}
           >
             <Feather name="edit-2" size={18} color={theme.primary} />
           </Pressable>
           <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              onDelete();
-            }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onDelete(); }}
             style={[styles.actionButton, { backgroundColor: theme.error + "15" }]}
           >
             <Feather name="trash-2" size={18} color={theme.error} />
@@ -255,6 +258,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.lg,
     borderRadius: BorderRadius.sm,
+    gap: Spacing.md,
+  },
+  workerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  workerAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  workerAvatarInitials: {
+    fontSize: 16,
+    fontWeight: "700",
   },
   workerInfo: {
     flex: 1,
@@ -266,6 +286,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
+  },
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 3,
+  },
+  phoneText: {
+    fontSize: 12,
   },
   categoryBadge: {
     paddingHorizontal: Spacing.sm,

@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   Dimensions,
+  Platform,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -19,6 +21,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
@@ -123,6 +126,8 @@ export default function AttendanceScreen() {
     day: number;
   } | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
+  const [isCapturingGPS, setIsCapturingGPS] = useState(false);
 
   const horizontalScrollRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
@@ -175,6 +180,40 @@ export default function AttendanceScreen() {
     setSelectedCell({ workerId, day });
     setShowInputModal(true);
     setCustomAmount("");
+    setCapturedLocation(null);
+  };
+
+  const captureGPSLocation = async () => {
+    if (Platform.OS === "web") {
+      Alert.alert("GPS", "Run in Expo Go to use GPS attendance.");
+      return;
+    }
+    setIsCapturingGPS(true);
+    try {
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        if (!canAskAgain && Platform.OS !== "web") {
+          Alert.alert(t.gps.permissionDenied, t.gps.permissionRequired, [
+            { text: t.common.cancel, style: "cancel" },
+            { text: t.gps.openSettings, onPress: () => { try { Linking.openSettings(); } catch {} } },
+          ]);
+        } else {
+          Alert.alert(t.gps.permissionDenied, t.gps.permissionRequired);
+        }
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCapturedLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        accuracy: loc.coords.accuracy ?? undefined,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert(t.common.error, t.attendance.gpsFailed);
+    } finally {
+      setIsCapturingGPS(false);
+    }
   };
 
   const markAttendance = async (value: AttendanceValue) => {
@@ -186,12 +225,15 @@ export default function AttendanceScreen() {
       month: selectedMonth,
       day: selectedCell.day,
       value,
+      location: capturedLocation ?? undefined,
+      timestamp: Date.now(),
     };
 
     await storage.setAttendanceRecord(record);
     await loadData();
     setShowInputModal(false);
     setSelectedCell(null);
+    setCapturedLocation(null);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
@@ -347,14 +389,45 @@ export default function AttendanceScreen() {
             />
             <Pressable
               onPress={handleCustomAmount}
-              style={[
-                styles.customAmountButton,
-                { backgroundColor: theme.amountBlue },
-              ]}
+              style={[styles.customAmountButton, { backgroundColor: theme.amountBlue }]}
             >
               <Feather name="check" size={20} color="#FFFFFF" />
             </Pressable>
           </View>
+
+          {/* GPS Location Capture */}
+          <Pressable
+            onPress={captureGPSLocation}
+            disabled={isCapturingGPS}
+            style={[
+              styles.gpsButton,
+              {
+                backgroundColor: capturedLocation
+                  ? theme.presentGreen + "15"
+                  : theme.backgroundSecondary,
+                borderColor: capturedLocation ? theme.presentGreen : theme.border,
+              },
+            ]}
+          >
+            <Feather
+              name="map-pin"
+              size={14}
+              color={capturedLocation ? theme.presentGreen : theme.textSecondary}
+            />
+            <ThemedText
+              type="small"
+              style={{ color: capturedLocation ? theme.presentGreen : theme.textSecondary, marginLeft: 6 }}
+            >
+              {isCapturingGPS
+                ? t.attendance.gpsCapturing
+                : capturedLocation
+                ? t.attendance.gpsCaptured
+                : t.attendance.captureGPS}
+            </ThemedText>
+            {capturedLocation ? (
+              <Feather name="check-circle" size={14} color={theme.presentGreen} style={{ marginLeft: "auto" }} />
+            ) : null}
+          </Pressable>
         </View>
       </Pressable>
     </Modal>
@@ -686,5 +759,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xs,
     justifyContent: "center",
     alignItems: "center",
+  },
+  gpsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
   },
 });

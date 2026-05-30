@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import {
   View,
   StyleSheet,
@@ -29,7 +29,16 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
-import { storage, ProfileData } from "@/utils/storage";
+import { storage, ProfileData, NotificationSettings } from "@/utils/storage";
+import {
+  scheduleAttendanceReminder,
+  cancelAttendanceReminder,
+  scheduleSalaryReminder,
+  cancelAllReminders,
+  requestNotificationPermission,
+  formatReminderTime,
+  DEFAULT_NOTIFICATION_SETTINGS,
+} from "@/utils/notifications";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -140,17 +149,61 @@ export default function SettingsScreen() {
   const [editingName, setEditingName] = useState("");
 
   const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
 
   const loadProfile = useCallback(async () => {
     const data = await storage.getProfile();
     if (data) setProfile(data);
   }, []);
 
+  const loadNotifSettings = useCallback(async () => {
+    const saved = await storage.getNotificationSettings();
+    if (saved) setNotifSettings(saved);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
-    }, [loadProfile])
+      loadNotifSettings();
+    }, [loadProfile, loadNotifSettings])
   );
+
+  const handleAttendanceReminderToggle = async (enabled: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (enabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired);
+        return;
+      }
+      await scheduleAttendanceReminder(notifSettings.reminderHour, notifSettings.reminderMinute);
+    } else {
+      await cancelAttendanceReminder();
+    }
+    const updated = { ...notifSettings, attendanceReminderEnabled: enabled };
+    setNotifSettings(updated);
+    await storage.setNotificationSettings(updated);
+  };
+
+  const handleSalaryReminderToggle = async (enabled: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (enabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired);
+        return;
+      }
+      await scheduleSalaryReminder();
+    } else {
+      await cancelAllReminders();
+      if (notifSettings.attendanceReminderEnabled) {
+        await scheduleAttendanceReminder(notifSettings.reminderHour, notifSettings.reminderMinute);
+      }
+    }
+    const updated = { ...notifSettings, salaryReminderEnabled: enabled };
+    setNotifSettings(updated);
+    await storage.setNotificationSettings(updated);
+  };
 
   const changeTheme = async (value: string) => {
     setSelectedTheme(value);
@@ -283,6 +336,54 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* NOTIFICATIONS */}
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
+            {t.settings.notifications}
+          </ThemedText>
+        </View>
+        <View style={styles.section}>
+          <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.item}>
+              <View style={[styles.itemIcon, { backgroundColor: "#FF9800" + "15" }]}>
+                <Feather name="bell" size={18} color="#FF9800" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.itemText}>{t.settings.attendanceReminder}</ThemedText>
+                {notifSettings.attendanceReminderEnabled ? (
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {formatReminderTime(notifSettings.reminderHour, notifSettings.reminderMinute)}
+                  </ThemedText>
+                ) : null}
+              </View>
+              <Switch
+                value={notifSettings.attendanceReminderEnabled}
+                onValueChange={handleAttendanceReminderToggle}
+                trackColor={{ false: theme.border, true: "#FF9800" }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+            <View style={[styles.separator, { backgroundColor: theme.border }]} />
+            <View style={styles.item}>
+              <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
+                <Feather name="dollar-sign" size={18} color={theme.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.itemText}>{t.settings.salaryReminder}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {notifSettings.salaryReminderEnabled ? t.notifications.enabled : t.notifications.disabled}
+                </ThemedText>
+              </View>
+              <Switch
+                value={notifSettings.salaryReminderEnabled}
+                onValueChange={handleSalaryReminderToggle}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+          </View>
+        </View>
+
         {/* FUNCTIONALITY */}
         <View style={styles.sectionHeader}>
           <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
@@ -295,7 +396,12 @@ export default function SettingsScreen() {
               <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
                 <Feather name="map-pin" size={18} color={theme.primary} />
               </View>
-              <ThemedText style={styles.itemText}>{t.settings.gpsAttendance}</ThemedText>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.itemText}>{t.settings.gpsAttendance}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {t.settings.gpsAttendanceDesc}
+                </ThemedText>
+              </View>
               <Switch
                 value={gpsEnabled}
                 onValueChange={(v) => {
