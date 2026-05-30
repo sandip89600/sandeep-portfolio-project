@@ -1,4 +1,4 @@
-- [Expo notifications web compat](expo-notifications-web.md) — expo-notifications needs a `.web.ts` stub to prevent Metro bundling failures on web
+- [Expo native-only packages web compat](expo-web-stubs.md) — expo-location AND expo-notifications crash on web; both need `.web.ts` stubs; never import them directly in screen files
 - [Expo package versions](expo-package-versions.md) — expo-location and expo-notifications must match SDK 54 expected versions (~19.0.8 and ~0.32.17 respectively)
 - [App.tsx structure](apptsx-structure.md) — ErrorBoundary MUST be inside ThemeProvider; ThemeProvider returns null while loading
 - [Worker storage architecture](worker-storage.md) — Worker has phone/address/notes/photoUri fields; AttendanceRecord has optional GPS location + timestamp

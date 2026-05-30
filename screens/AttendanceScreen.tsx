@@ -9,7 +9,6 @@ import {
   Alert,
   Dimensions,
   Platform,
-  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -21,7 +20,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
+import { captureLocation, requestLocationPermission, GPSLocation } from "@/utils/gps";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
@@ -126,7 +125,7 @@ export default function AttendanceScreen() {
     day: number;
   } | null>(null);
   const [customAmount, setCustomAmount] = useState("");
-  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
+  const [capturedLocation, setCapturedLocation] = useState<GPSLocation | null>(null);
   const [isCapturingGPS, setIsCapturingGPS] = useState(false);
 
   const horizontalScrollRef = useRef<ScrollView>(null);
@@ -190,25 +189,18 @@ export default function AttendanceScreen() {
     }
     setIsCapturingGPS(true);
     try {
-      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        if (!canAskAgain && Platform.OS !== "web") {
-          Alert.alert(t.gps.permissionDenied, t.gps.permissionRequired, [
-            { text: t.common.cancel, style: "cancel" },
-            { text: t.gps.openSettings, onPress: () => { try { Linking.openSettings(); } catch {} } },
-          ]);
-        } else {
-          Alert.alert(t.gps.permissionDenied, t.gps.permissionRequired);
-        }
+      const permission = await requestLocationPermission();
+      if (permission !== "granted") {
+        Alert.alert(t.gps.permissionDenied, t.gps.permissionRequired);
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setCapturedLocation({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        accuracy: loc.coords.accuracy ?? undefined,
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const loc = await captureLocation();
+      if (loc) {
+        setCapturedLocation(loc);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Alert.alert(t.common.error, t.attendance.gpsFailed);
+      }
     } catch {
       Alert.alert(t.common.error, t.attendance.gpsFailed);
     } finally {
