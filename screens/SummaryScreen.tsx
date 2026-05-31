@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -206,6 +207,7 @@ export default function SummaryScreen() {
   const [grandTotal, setGrandTotal] = useState(0);
   const [grandTotalPaid, setGrandTotalPaid] = useState(0);
 
+  const [isLoading, setIsLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentWorker, setPaymentWorker] = useState<WorkerSummary | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -232,29 +234,34 @@ export default function SummaryScreen() {
   );
 
   const loadSummaries = async () => {
-    const loadedWorkers = await storage.getWorkers();
-    const loadedAttendance = await storage.getAttendanceForMonth(selectedYear, selectedMonth);
-    const loadedPayments = await storage.getPaymentsForMonth(selectedYear, selectedMonth);
+    setIsLoading(true);
+    try {
+      const loadedWorkers = await storage.getWorkers();
+      const loadedAttendance = await storage.getAttendanceForMonth(selectedYear, selectedMonth);
+      const loadedPayments = await storage.getPaymentsForMonth(selectedYear, selectedMonth);
 
-    setWorkers(loadedWorkers);
-    setAttendance(loadedAttendance);
+      setWorkers(loadedWorkers);
+      setAttendance(loadedAttendance);
 
-    const workerSummaries: WorkerSummary[] = loadedWorkers.map((worker) => {
-      const summary = calculateWorkerSummary(worker.id, loadedAttendance, worker.dailyRate);
-      const workerPayments = loadedPayments.filter((p) => p.workerId === worker.id);
-      const totalPaid = workerPayments.reduce((sum, p) => sum + p.amount, 0);
-      return {
-        worker,
-        ...summary,
-        totalPaid,
-        balance: Math.max(0, summary.totalAmount - totalPaid),
-        payments: workerPayments,
-      };
-    });
+      const workerSummaries: WorkerSummary[] = loadedWorkers.map((worker) => {
+        const summary = calculateWorkerSummary(worker.id, loadedAttendance, worker.dailyRate);
+        const workerPayments = loadedPayments.filter((p) => p.workerId === worker.id);
+        const totalPaid = workerPayments.reduce((sum, p) => sum + p.amount, 0);
+        return {
+          worker,
+          ...summary,
+          totalPaid,
+          balance: Math.max(0, summary.totalAmount - totalPaid),
+          payments: workerPayments,
+        };
+      });
 
-    setSummaries(workerSummaries);
-    setGrandTotal(workerSummaries.reduce((sum, s) => sum + s.totalAmount, 0));
-    setGrandTotalPaid(workerSummaries.reduce((sum, s) => sum + s.totalPaid, 0));
+      setSummaries(workerSummaries);
+      setGrandTotal(workerSummaries.reduce((sum, s) => sum + s.totalAmount, 0));
+      setGrandTotalPaid(workerSummaries.reduce((sum, s) => sum + s.totalPaid, 0));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleMarkPaid = (summary: WorkerSummary) => {
@@ -437,14 +444,23 @@ export default function SummaryScreen() {
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Feather name="bar-chart-2" size={64} color={theme.textSecondary} style={styles.emptyIcon} />
-      <ThemedText type="h3" style={styles.emptyTitle}>
-        {t.summary.noData}
-      </ThemedText>
-    </View>
-  );
+  const renderEmpty = () => {
+    if (isLoading) {
+      return (
+        <View style={[styles.emptyContainer, { paddingTop: Spacing["4xl"] }]}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyContainer}>
+        <Feather name="bar-chart-2" size={64} color={theme.textSecondary} style={styles.emptyIcon} />
+        <ThemedText type="h3" style={styles.emptyTitle}>
+          {t.summary.noData}
+        </ThemedText>
+      </View>
+    );
+  };
 
   const renderMonthPicker = () => (
     <Modal
@@ -653,6 +669,14 @@ export default function SummaryScreen() {
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={loadSummaries}
+            tintColor={theme.primary}
+            colors={[theme.primary]}
+          />
+        }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
 

@@ -9,6 +9,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -116,6 +117,7 @@ export default function AttendanceScreen() {
 
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showMonthPicker, setShowMonthPicker] = useState(false);
@@ -152,13 +154,18 @@ export default function AttendanceScreen() {
   }, [selectedMonth, selectedYear]);
 
   const loadData = async () => {
-    const loadedWorkers = await storage.getWorkers();
-    const loadedAttendance = await storage.getAttendanceForMonth(
-      selectedYear,
-      selectedMonth
-    );
-    setWorkers(loadedWorkers);
-    setAttendance(loadedAttendance);
+    setIsLoading(true);
+    try {
+      const loadedWorkers = await storage.getWorkers();
+      const loadedAttendance = await storage.getAttendanceForMonth(
+        selectedYear,
+        selectedMonth
+      );
+      setWorkers(loadedWorkers);
+      setAttendance(loadedAttendance);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getAttendanceValue = (
@@ -424,6 +431,14 @@ export default function AttendanceScreen() {
       </Pressable>
     </Modal>
   );
+
+  if (isLoading) {
+    return (
+      <ThemedView style={[styles.emptyContainer, { paddingTop: headerHeight + Spacing.xl }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </ThemedView>
+    );
+  }
 
   if (workers.length === 0) {
     return (

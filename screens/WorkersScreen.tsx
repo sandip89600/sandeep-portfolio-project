@@ -6,6 +6,7 @@ import {
   Alert,
   FlatList,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -145,6 +146,7 @@ export default function WorkersScreen() {
   const tabBarHeight = insets.bottom + 60;
 
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -153,8 +155,13 @@ export default function WorkersScreen() {
   );
 
   const loadWorkers = async () => {
-    const loadedWorkers = await storage.getWorkers();
-    setWorkers(loadedWorkers.sort((a, b) => b.createdAt - a.createdAt));
+    setIsLoading(true);
+    try {
+      const loadedWorkers = await storage.getWorkers();
+      setWorkers(loadedWorkers.sort((a, b) => b.createdAt - a.createdAt));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddWorker = () => {
@@ -191,30 +198,38 @@ export default function WorkersScreen() {
     />
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Feather
-        name="user-plus"
-        size={64}
-        color={theme.textSecondary}
-        style={styles.emptyIcon}
-      />
-      <ThemedText type="h3" style={styles.emptyTitle}>
-        {t.workers.noWorkers}
-      </ThemedText>
-      <ThemedText
-        type="body"
-        style={[styles.emptySubtitle, { color: theme.textSecondary }]}
-      >
-        {t.workers.addFirst}
-      </ThemedText>
-    </View>
-  );
+  const renderEmpty = () => {
+    if (isLoading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Feather
+          name="user-plus"
+          size={64}
+          color={theme.textSecondary}
+          style={styles.emptyIcon}
+        />
+        <ThemedText type="h3" style={styles.emptyTitle}>
+          {t.workers.noWorkers}
+        </ThemedText>
+        <ThemedText
+          type="body"
+          style={[styles.emptySubtitle, { color: theme.textSecondary }]}
+        >
+          {t.workers.addFirst}
+        </ThemedText>
+      </View>
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
+      {isLoading ? (
+        <View style={[styles.loadingContainer, { paddingTop: headerHeight + Spacing.xl }]}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      ) : null}
       <FlatList
-        data={workers}
+        data={isLoading ? [] : workers}
         renderItem={renderWorker}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
@@ -226,6 +241,8 @@ export default function WorkersScreen() {
         ]}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        refreshing={false}
+        onRefresh={loadWorkers}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
 
@@ -249,6 +266,11 @@ export default function WorkersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     paddingHorizontal: Spacing.lg,

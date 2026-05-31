@@ -3,3 +3,6 @@
 - [App.tsx structure](apptsx-structure.md) — ErrorBoundary MUST be inside ThemeProvider; ThemeProvider returns null while loading
 - [Worker storage architecture](worker-storage.md) — Worker has phone/address/notes/photoUri fields; AttendanceRecord has optional GPS location + timestamp
 - [i18n type system](i18n-types.md) — TranslationKeys is inferred from `typeof en`, so JSON additions auto-propagate to TypeScript types
+- [Admin tab navigation fix](admin-tabs.md) — AdminTabs originally had only 2 screens; must include Attendance/Workers/Summary/AdminDashboard/Settings (5 total) for admin to access all features
+- [expo-linear-gradient](linear-gradient-web.md) — supports web; install with `npx expo install expo-linear-gradient`; web bundle count increases ~50 modules; used in SettingsScreen hero/subscription cards
+- [ProfileData photoUri persistence](profile-photo-persistence.md) — photoUri must be read in loadProfile() from storage AND written in pickImage(); skipping either causes photo to reset on navigation

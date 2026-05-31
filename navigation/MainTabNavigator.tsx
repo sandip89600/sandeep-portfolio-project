@@ -15,7 +15,6 @@ import SummaryScreen from "@/screens/SummaryScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import AddWorkerScreen from "@/screens/AddWorkerScreen";
 import AdminDashboardScreen from "@/screens/AdminDashboardScreen";
-import UserProfileScreen from "@/screens/UserProfileScreen";
 
 export type MainTabParamList = {
   AttendanceTab: undefined;
@@ -38,32 +37,65 @@ function AdminTabs() {
   const { theme, isDark } = useTheme();
   const { t } = useLanguage();
 
+  const tabBarStyle = {
+    position: "absolute" as const,
+    backgroundColor: Platform.select({
+      ios: "transparent",
+      android: theme.backgroundRoot,
+    }),
+    borderTopWidth: 0,
+    elevation: 0,
+  };
+
+  const tabBackground = () =>
+    Platform.OS === "ios" ? (
+      <BlurView intensity={100} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+    ) : null;
+
   return (
     <Tab.Navigator
-      initialRouteName="AdminDashboardTab"
+      initialRouteName="AttendanceTab"
       screenOptions={{
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.tabIconDefault,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: Platform.select({
-            ios: "transparent",
-            android: theme.backgroundRoot,
-          }),
-          borderTopWidth: 0,
-          elevation: 0,
-        },
-        tabBarBackground: () =>
-          Platform.OS === "ios" ? (
-            <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : null,
+        tabBarStyle,
+        tabBarBackground: tabBackground,
         ...getCommonScreenOptions({ theme, isDark }),
       }}
     >
+      <Tab.Screen
+        name="AttendanceTab"
+        component={AttendanceScreen}
+        options={{
+          title: t.tabs.attendance,
+          headerTitle: () => <HeaderTitle title={t.app.name} />,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="calendar" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="WorkersTab"
+        component={WorkersScreen}
+        options={{
+          title: t.tabs.workers,
+          headerTitle: t.workers.title,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="users" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="SummaryTab"
+        component={SummaryScreen}
+        options={{
+          title: t.tabs.summary,
+          headerTitle: t.summary.title,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="bar-chart-2" size={size} color={color} />
+          ),
+        }}
+      />
       <Tab.Screen
         name="AdminDashboardTab"
         component={AdminDashboardScreen}

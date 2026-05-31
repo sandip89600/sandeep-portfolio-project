@@ -23,6 +23,7 @@ export interface AuthData {
 export interface ProfileData {
   name: string;
   avatarColor: string;
+  photoUri?: string;
 }
 
 export interface User {

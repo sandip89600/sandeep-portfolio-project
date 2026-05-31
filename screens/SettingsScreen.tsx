@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, memo } from "react";
+import React, { useState, useCallback, useRef, memo } from "react";
 import {
   View,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   Image,
   Platform,
   TextInput,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -19,8 +21,12 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
+  FadeIn,
+  FadeInDown,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -41,119 +47,150 @@ import {
 } from "@/utils/notifications";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-interface SettingItemProps {
+const THEME_OPTIONS = [
+  { key: "Light", icon: "sun" as const, label: "Light Mode", desc: "Clean & bright" },
+  { key: "Dark", icon: "moon" as const, label: "Dark Mode", desc: "Easy on the eyes" },
+  { key: "System", icon: "smartphone" as const, label: "System Default", desc: "Follows device setting" },
+];
+
+const LANGUAGES: { code: Language; name: string; native: string; flag: string }[] = [
+  { code: "en", name: "English", native: "English", flag: "EN" },
+  { code: "hi", name: "Hindi", native: "हिंदी", flag: "हि" },
+];
+
+// ─── Reusable Row ────────────────────────────────────────────────────────────
+interface RowProps {
   icon: string;
+  iconColor: string;
   label: string;
+  sublabel?: string;
   value?: string;
   onPress?: () => void;
-  theme: typeof Colors.light;
-  isDestructive?: boolean;
   right?: React.ReactNode;
+  isDestructive?: boolean;
+  theme: typeof Colors.light;
+  isLast?: boolean;
+  delay?: number;
 }
 
-const SettingItem = memo(
-  ({ icon, label, value, onPress, theme, isDestructive, right }: SettingItemProps) => {
-    const scale = useSharedValue(1);
+const Row = memo(function Row({
+  icon, iconColor, label, sublabel, value, onPress, right, isDestructive, theme, isLast, delay = 0,
+}: RowProps) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const textColor = isDestructive ? "#EF5350" : theme.text;
 
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
-
-    return (
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).duration(300)}>
       <AnimatedPressable
-        onPress={() => {
-          if (onPress) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            onPress();
-          }
-        }}
-        onPressIn={() => { scale.value = withSpring(0.98); }}
-        onPressOut={() => { scale.value = withSpring(1); }}
-        style={[
-          styles.item,
-          { backgroundColor: theme.backgroundDefault },
-          animatedStyle,
-        ]}
+        onPress={() => { if (onPress) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); } }}
+        onPressIn={() => { if (onPress) scale.value = withSpring(0.97, { damping: 20 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 20 }); }}
+        style={[styles.row, animatedStyle]}
       >
-        <View
-          style={[
-            styles.itemIcon,
-            {
-              backgroundColor: isDestructive
-                ? theme.error + "15"
-                : theme.primary + "15",
-            },
-          ]}
-        >
-          <Feather
-            name={icon as any}
-            size={18}
-            color={isDestructive ? theme.error : theme.primary}
-          />
+        <View style={[styles.rowIcon, { backgroundColor: iconColor + "18" }]}>
+          <Feather name={icon as any} size={18} color={iconColor} />
         </View>
-        <ThemedText style={[styles.itemText, isDestructive ? { color: theme.error } : {}]}>
-          {label}
-        </ThemedText>
-
+        <View style={styles.rowContent}>
+          <ThemedText style={[styles.rowLabel, { color: textColor }]}>{label}</ThemedText>
+          {sublabel ? (
+            <ThemedText type="small" style={[styles.rowSublabel, { color: theme.textSecondary }]}>
+              {sublabel}
+            </ThemedText>
+          ) : null}
+        </View>
         {right ? (
           right
         ) : (
-          <View style={styles.itemRight}>
+          <View style={styles.rowRight}>
             {value ? (
-              <ThemedText style={styles.itemValue}>{value}</ThemedText>
+              <View style={[styles.valuePill, { backgroundColor: theme.primary + "18" }]}>
+                <ThemedText type="small" style={[styles.valuePillText, { color: theme.primary }]}>
+                  {value}
+                </ThemedText>
+              </View>
             ) : null}
             {onPress ? (
-              <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+              <Feather name="chevron-right" size={16} color={theme.textSecondary} style={{ marginLeft: 4 }} />
             ) : null}
           </View>
         )}
       </AnimatedPressable>
-    );
-  }
-);
+      {!isLast ? <View style={[styles.rowDivider, { backgroundColor: theme.border }]} /> : null}
+    </Animated.View>
+  );
+});
 
-const THEME_OPTIONS = [
-  { key: "Light", icon: "sun" as const, label: "Light" },
-  { key: "Dark", icon: "moon" as const, label: "Dark" },
-  { key: "System", icon: "smartphone" as const, label: "System" },
-];
+// ─── Section Card ─────────────────────────────────────────────────────────────
+function SectionCard({ children, theme }: { children: React.ReactNode; theme: typeof Colors.light }) {
+  return (
+    <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
+      {children}
+    </View>
+  );
+}
 
-const LANGUAGES: { code: Language; name: string }[] = [
-  { code: "en", name: "English" },
-  { code: "hi", name: "हिंदी" },
-];
+function SectionLabel({ label, theme }: { label: string; theme: typeof Colors.light }) {
+  return (
+    <ThemedText style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+      {label}
+    </ThemedText>
+  );
+}
 
+// ─── Bottom Sheet Modal ────────────────────────────────────────────────────────
+function BottomSheet({
+  visible, onClose, title, children, theme,
+}: {
+  visible: boolean; onClose: () => void; title: string; children: React.ReactNode; theme: typeof Colors.light;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={[styles.sheet, { backgroundColor: theme.backgroundDefault }]} onPress={(e) => e.stopPropagation()}>
+          <View style={[styles.sheetHandle, { backgroundColor: theme.border }]} />
+          <ThemedText type="h3" style={styles.sheetTitle}>{title}</ThemedText>
+          {children}
+          <View style={{ height: Spacing["2xl"] }} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
-  const { theme, themeMode, setThemeMode } = useTheme();
+  const { theme, themeMode, setThemeMode, isDark } = useTheme();
   const { email, logout, userType, isGuest } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
   const [profile, setProfile] = useState<ProfileData>({
     name: isGuest ? "Guest" : "Admin",
-    avatarColor: isGuest ? "#9BA1A6" : "#FF6B6B",
+    avatarColor: isGuest ? "#9BA1A6" : "#FF6B35",
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState(
     themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "System"
   );
-
-  const [showThemeModal, setShowThemeModal] = useState(false);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
+  const [showThemeSheet, setShowThemeSheet] = useState(false);
+  const [showLangSheet, setShowLangSheet] = useState(false);
+  const [showImageSheet, setShowImageSheet] = useState(false);
+  const [showNameSheet, setShowNameSheet] = useState(false);
   const [editingName, setEditingName] = useState("");
-
   const [gpsEnabled, setGpsEnabled] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
 
   const loadProfile = useCallback(async () => {
     const data = await storage.getProfile();
-    if (data) setProfile(data);
+    if (data) {
+      setProfile(data);
+      if (data.photoUri) setProfileImage(data.photoUri);
+    }
   }, []);
 
   const loadNotifSettings = useCallback(async () => {
@@ -161,21 +198,21 @@ export default function SettingsScreen() {
     if (saved) setNotifSettings(saved);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadProfile();
-      loadNotifSettings();
-    }, [loadProfile, loadNotifSettings])
-  );
+  useFocusEffect(useCallback(() => { loadProfile(); loadNotifSettings(); }, [loadProfile, loadNotifSettings]));
+
+  const changeTheme = async (value: string) => {
+    setSelectedTheme(value);
+    setShowThemeSheet(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const map: Record<string, "light" | "dark" | "system"> = { Light: "light", Dark: "dark", System: "system" };
+    await setThemeMode(map[value]);
+  };
 
   const handleAttendanceReminderToggle = async (enabled: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (enabled) {
       const granted = await requestNotificationPermission();
-      if (!granted) {
-        Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired);
-        return;
-      }
+      if (!granted) { Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired); return; }
       await scheduleAttendanceReminder(notifSettings.reminderHour, notifSettings.reminderMinute);
     } else {
       await cancelAttendanceReminder();
@@ -189,10 +226,7 @@ export default function SettingsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (enabled) {
       const granted = await requestNotificationPermission();
-      if (!granted) {
-        Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired);
-        return;
-      }
+      if (!granted) { Alert.alert(t.notifications.permissionDenied, t.notifications.permissionRequired); return; }
       await scheduleSalaryReminder();
     } else {
       await cancelAllReminders();
@@ -205,610 +239,537 @@ export default function SettingsScreen() {
     await storage.setNotificationSettings(updated);
   };
 
-  const changeTheme = async (value: string) => {
-    setSelectedTheme(value);
-    setShowThemeModal(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const map: Record<string, "light" | "dark" | "system"> = {
-      Light: "light",
-      Dark: "dark",
-      System: "system",
-    };
-    await setThemeMode(map[value]);
-  };
-
   const pickImage = async (camera = false) => {
     const result = camera
       ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1] })
-      : await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: true,
-          aspect: [1, 1],
-        });
-
+      : await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1] });
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      setShowImageModal(false);
+      const uri = result.assets[0].uri;
+      setProfileImage(uri);
+      setShowImageSheet(false);
+      const newProfile = { ...profile, photoUri: uri };
+      setProfile(newProfile);
+      await storage.setProfile(newProfile);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  };
-
-  const handleOpenNameEdit = () => {
-    setEditingName(profile.name);
-    setShowNameModal(true);
   };
 
   const handleSaveName = async () => {
     const newName = editingName.trim();
-    if (!newName) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
+    if (!newName) { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); return; }
     const newProfile = { ...profile, name: newName };
     await storage.setProfile(newProfile);
     setProfile(newProfile);
-    setShowNameModal(false);
+    setShowNameSheet(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleLogout = () => {
-    if (isGuest) {
-      logout();
-      return;
-    }
+    if (isGuest) { logout(); return; }
     Alert.alert(t.settings.logout, t.settings.logoutConfirm, [
       { text: t.common.cancel, style: "cancel" },
-      {
-        text: t.settings.logout,
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-        },
-      },
+      { text: t.settings.logout, style: "destructive", onPress: async () => { await logout(); } },
     ]);
   };
+
+  const initials = profile.name?.charAt(0)?.toUpperCase() || "A";
+  const ORANGE = "#FF6B35";
+  const NAVY = "#1E3A5F";
 
   return (
     <ThemedView style={styles.container}>
       <ScreenScrollView
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.lg,
-          paddingBottom: insets.bottom + Spacing.xl * 3,
+          paddingBottom: insets.bottom + Spacing["5xl"],
+          paddingHorizontal: Spacing.lg,
         }}
       >
-        {/* PROFILE CARD */}
-        <View style={[styles.header, { backgroundColor: theme.backgroundDefault }]}>
-          <Pressable
-            onPress={() => setShowImageModal(true)}
-            style={styles.avatarContainer}
+
+        {/* ── PROFILE HERO CARD ── */}
+        <Animated.View entering={FadeIn.duration(400)} style={styles.heroCard}>
+          <LinearGradient
+            colors={["#1E3A5F", "#0D1F35"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
           >
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, { backgroundColor: profile.avatarColor }]}>
-                <ThemedText style={styles.avatarText}>
-                  {profile?.name?.charAt(0)?.toUpperCase() || "A"}
-                </ThemedText>
+            {/* Decorative circles */}
+            <View style={styles.heroBubble1} />
+            <View style={styles.heroBubble2} />
+
+            <View style={styles.heroContent}>
+              {/* Avatar */}
+              <Pressable onPress={() => setShowImageSheet(true)} style={styles.heroAvatarWrap}>
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={styles.heroAvatar} />
+                ) : (
+                  <LinearGradient colors={[ORANGE, "#FF8C35"]} style={styles.heroAvatar}>
+                    <ThemedText style={styles.heroAvatarText}>{initials}</ThemedText>
+                  </LinearGradient>
+                )}
+                <View style={styles.heroAvatarBadge}>
+                  <Feather name="camera" size={11} color="#fff" />
+                </View>
+              </Pressable>
+
+              {/* Info */}
+              <View style={styles.heroInfo}>
+                <Pressable onPress={() => { setEditingName(profile.name); setShowNameSheet(true); }}
+                  style={styles.heroNameRow}>
+                  <ThemedText style={styles.heroName}>{profile.name}</ThemedText>
+                  <View style={styles.heroEditBadge}>
+                    <Feather name="edit-2" size={10} color="#fff" />
+                  </View>
+                </Pressable>
+                <ThemedText style={styles.heroEmail}>{isGuest ? t.settings.guestMode : email}</ThemedText>
+                <View style={styles.heroBadgeRow}>
+                  {userType === "admin" ? (
+                    <View style={styles.adminBadge}>
+                      <Feather name="shield" size={10} color={ORANGE} />
+                      <ThemedText style={styles.adminBadgeText}>{t.settings.admin}</ThemedText>
+                    </View>
+                  ) : null}
+                  {isGuest ? (
+                    <View style={[styles.adminBadge, { backgroundColor: "#9BA1A620" }]}>
+                      <ThemedText style={[styles.adminBadgeText, { color: "#9BA1A6" }]}>Guest</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
               </View>
-            )}
-            <View style={[styles.avatarEditBadge, { backgroundColor: theme.primary }]}>
-              <Feather name="camera" size={12} color="#FFFFFF" />
             </View>
-          </Pressable>
 
-          <Pressable onPress={handleOpenNameEdit} style={styles.nameRow}>
-            <ThemedText style={styles.userName}>{profile.name}</ThemedText>
-            <Feather name="edit-2" size={14} color={theme.textSecondary} style={{ marginLeft: 6 }} />
-          </Pressable>
-          <ThemedText style={styles.userEmail}>{isGuest ? t.settings.guestMode : email}</ThemedText>
-          {userType === "admin" ? (
-            <View style={[styles.roleBadge, { backgroundColor: theme.primary + "20" }]}>
-              <ThemedText type="small" style={{ color: theme.primary, fontWeight: "600" }}>
-                {t.settings.admin}
-              </ThemedText>
-            </View>
-          ) : null}
-        </View>
+            {/* Edit profile button */}
+            {!isGuest ? (
+              <Pressable
+                onPress={() => { setEditingName(profile.name); setShowNameSheet(true); }}
+                style={styles.heroEditBtn}
+              >
+                <ThemedText style={styles.heroEditBtnText}>Edit Profile</ThemedText>
+              </Pressable>
+            ) : null}
+          </LinearGradient>
+        </Animated.View>
 
-        <View style={{ height: Spacing.xl }} />
-
-        {/* APP SETTINGS */}
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
-            {t.settings.appearance}
-          </ThemedText>
-        </View>
-        <View style={styles.section}>
-          <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
-            <SettingItem
-              icon="sun"
-              label={t.settings.theme}
-              value={selectedTheme}
-              onPress={() => setShowThemeModal(true)}
-              theme={theme}
-            />
-            <View style={[styles.separator, { backgroundColor: theme.border }]} />
-            <SettingItem
-              icon="globe"
-              label={t.settings.language}
-              value={languageNames[language]}
-              onPress={() => setShowLanguageModal(true)}
-              theme={theme}
-            />
-          </View>
-        </View>
-
-        {/* NOTIFICATIONS */}
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
-            {t.settings.notifications}
-          </ThemedText>
-        </View>
-        <View style={styles.section}>
-          <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
-            <View style={styles.item}>
-              <View style={[styles.itemIcon, { backgroundColor: "#FF9800" + "15" }]}>
-                <Feather name="bell" size={18} color="#FF9800" />
-              </View>
+        {/* ── GUEST CARD ── */}
+        {isGuest ? (
+          <Animated.View entering={FadeInDown.delay(80).duration(350)}>
+            <View style={[styles.guestBanner, { backgroundColor: ORANGE + "12", borderColor: ORANGE + "40" }]}>
+              <Feather name="lock" size={18} color={ORANGE} />
               <View style={{ flex: 1 }}>
-                <ThemedText style={styles.itemText}>{t.settings.attendanceReminder}</ThemedText>
-                {notifSettings.attendanceReminderEnabled ? (
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                    {formatReminderTime(notifSettings.reminderHour, notifSettings.reminderMinute)}
-                  </ThemedText>
-                ) : null}
+                <ThemedText style={[styles.guestBannerTitle, { color: ORANGE }]}>{t.settings.guestMode}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>{t.settings.guestModeDesc}</ThemedText>
               </View>
+              <Pressable onPress={handleLogout} style={[styles.guestSignInBtn, { backgroundColor: ORANGE }]}>
+                <ThemedText style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>{t.settings.signIn}</ThemedText>
+              </Pressable>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* ── APPEARANCE ── */}
+        <SectionLabel label={t.settings.appearance} theme={theme} />
+        <SectionCard theme={theme}>
+          <Row
+            icon="sun" iconColor={ORANGE}
+            label={t.settings.theme} value={selectedTheme}
+            onPress={() => setShowThemeSheet(true)}
+            theme={theme} delay={60}
+          />
+          <Row
+            icon="globe" iconColor="#42A5F5"
+            label={t.settings.language} value={languageNames[language]}
+            onPress={() => setShowLangSheet(true)}
+            theme={theme} isLast delay={80}
+          />
+        </SectionCard>
+
+        {/* ── ATTENDANCE SETTINGS ── */}
+        <SectionLabel label={t.settings.appSettings} theme={theme} />
+        <SectionCard theme={theme}>
+          <Row
+            icon="map-pin" iconColor="#4CAF50"
+            label={t.settings.gpsAttendance}
+            sublabel={t.settings.gpsAttendanceDesc}
+            theme={theme}
+            delay={100}
+            right={
+              <Switch
+                value={gpsEnabled}
+                onValueChange={(v) => { setGpsEnabled(v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                trackColor={{ false: theme.border, true: ORANGE }}
+                thumbColor="#FFFFFF"
+              />
+            }
+          />
+          <Row
+            icon="bell" iconColor="#FF9800"
+            label={t.settings.attendanceReminder}
+            sublabel={notifSettings.attendanceReminderEnabled
+              ? formatReminderTime(notifSettings.reminderHour, notifSettings.reminderMinute)
+              : undefined}
+            theme={theme}
+            delay={120}
+            right={
               <Switch
                 value={notifSettings.attendanceReminderEnabled}
                 onValueChange={handleAttendanceReminderToggle}
                 trackColor={{ false: theme.border, true: "#FF9800" }}
                 thumbColor="#FFFFFF"
               />
-            </View>
-            <View style={[styles.separator, { backgroundColor: theme.border }]} />
-            <View style={styles.item}>
-              <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
-                <Feather name="dollar-sign" size={18} color={theme.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.itemText}>{t.settings.salaryReminder}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {notifSettings.salaryReminderEnabled ? t.notifications.enabled : t.notifications.disabled}
-                </ThemedText>
-              </View>
+            }
+          />
+          <Row
+            icon="dollar-sign" iconColor={ORANGE}
+            label={t.settings.salaryReminder}
+            sublabel={notifSettings.salaryReminderEnabled ? t.notifications.enabled : t.notifications.disabled}
+            theme={theme} isLast delay={140}
+            right={
               <Switch
                 value={notifSettings.salaryReminderEnabled}
                 onValueChange={handleSalaryReminderToggle}
-                trackColor={{ false: theme.border, true: theme.primary }}
+                trackColor={{ false: theme.border, true: ORANGE }}
                 thumbColor="#FFFFFF"
               />
-            </View>
-          </View>
-        </View>
+            }
+          />
+        </SectionCard>
 
-        {/* FUNCTIONALITY */}
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
-            {t.settings.appSettings}
-          </ThemedText>
-        </View>
-        <View style={styles.section}>
-          <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
-            <View style={styles.item}>
-              <View style={[styles.itemIcon, { backgroundColor: theme.primary + "15" }]}>
-                <Feather name="map-pin" size={18} color={theme.primary} />
+        {/* ── SUBSCRIPTION CARD ── */}
+        <Animated.View entering={FadeInDown.delay(160).duration(350)}>
+          <LinearGradient
+            colors={[NAVY + "EE", "#0D1F35EE"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.subCard}
+          >
+            <View style={styles.subCardLeft}>
+              <View style={styles.subPlanBadge}>
+                <ThemedText style={styles.subPlanBadgeText}>FREE PLAN</ThemedText>
               </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.itemText}>{t.settings.gpsAttendance}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {t.settings.gpsAttendanceDesc}
-                </ThemedText>
-              </View>
-              <Switch
-                value={gpsEnabled}
-                onValueChange={(v) => {
-                  setGpsEnabled(v);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-                trackColor={{ false: theme.border, true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
+              <ThemedText style={styles.subTitle}>Haajari Basic</ThemedText>
+              <ThemedText style={styles.subDesc}>Upgrade to unlock cloud sync, multi-site {"&"} team features</ThemedText>
             </View>
-          </View>
-        </View>
+            <Pressable style={styles.subUpgradeBtn}>
+              <LinearGradient colors={[ORANGE, "#FF8C35"]} style={styles.subUpgradeGrad}>
+                <ThemedText style={styles.subUpgradeText}>Upgrade</ThemedText>
+              </LinearGradient>
+            </Pressable>
+          </LinearGradient>
+        </Animated.View>
 
-        {/* GUEST SIGN IN PROMPT */}
-        {isGuest ? (
-          <View style={styles.section}>
-            <View style={[styles.guestCard, { backgroundColor: theme.primary + "12", borderColor: theme.primary + "30" }]}>
-              <Feather name="lock" size={20} color={theme.primary} style={{ marginBottom: Spacing.sm }} />
-              <ThemedText style={{ fontWeight: "600", marginBottom: Spacing.xs, color: theme.primary }}>
-                {t.settings.guestMode}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.lg, textAlign: "center" }}>
-                {t.settings.guestModeDesc}
-              </ThemedText>
-              <Pressable
-                onPress={handleLogout}
-                style={[styles.signInBtn, { backgroundColor: theme.primary }]}
-              >
-                <Feather name="log-in" size={16} color="#FFFFFF" />
-                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "700", marginLeft: Spacing.xs }}>
-                  {t.settings.signIn}
-                </ThemedText>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>
-                {t.settings.profile}
-              </ThemedText>
-            </View>
-            <View style={styles.section}>
-              <View style={[styles.itemsContainer, { backgroundColor: theme.backgroundDefault }]}>
-                <SettingItem
-                  icon="log-out"
-                  label={t.settings.logout}
-                  onPress={handleLogout}
-                  theme={theme}
-                  isDestructive
-                />
-              </View>
-            </View>
-          </>
-        )}
+        {/* ── SUPPORT & ABOUT ── */}
+        <SectionLabel label="Support & About" theme={theme} />
+        <SectionCard theme={theme}>
+          <Row icon="help-circle" iconColor="#9C27B0" label="Help & Support" onPress={() => {}} theme={theme} delay={200} />
+          <Row icon="file-text" iconColor="#607D8B" label="Terms & Conditions" onPress={() => {}} theme={theme} delay={210} />
+          <Row icon="shield" iconColor="#2196F3" label="Privacy Policy" onPress={() => {}} theme={theme} delay={220} />
+          <Row icon="star" iconColor="#FFC107" label="Rate Haajari" onPress={() => {}} theme={theme} delay={230} />
+          <Row
+            icon="info" iconColor="#9BA1A6"
+            label={t.settings.version}
+            value="1.0.0"
+            theme={theme} isLast delay={240}
+          />
+        </SectionCard>
 
-        <View style={styles.versionContainer}>
-          <ThemedText style={styles.versionText}>{t.settings.version} 1.0.0</ThemedText>
-        </View>
+        {/* ── LOGOUT ── */}
+        {!isGuest ? (
+          <Animated.View entering={FadeInDown.delay(260).duration(350)}>
+            <Pressable
+              onPress={handleLogout}
+              style={[styles.logoutBtn, { borderColor: "#EF5350" + "60" }]}
+              onPressIn={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+            >
+              <View style={[styles.logoutIcon, { backgroundColor: "#EF535018" }]}>
+                <Feather name="log-out" size={18} color="#EF5350" />
+              </View>
+              <ThemedText style={styles.logoutText}>{t.settings.logout}</ThemedText>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
+        <ThemedText style={[styles.versionFooter, { color: theme.textSecondary }]}>
+          Haajari — Labour Attendance Manager{"\n"}v1.0.0
+        </ThemedText>
+
       </ScreenScrollView>
 
-      {/* THEME MODAL */}
-      <Modal
-        visible={showThemeModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowThemeModal(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setShowThemeModal(false)}>
+      {/* ── THEME BOTTOM SHEET ── */}
+      <BottomSheet visible={showThemeSheet} onClose={() => setShowThemeSheet(false)} title={t.settings.theme} theme={theme}>
+        {THEME_OPTIONS.map((opt, idx) => (
           <Pressable
-            style={[styles.modal, { backgroundColor: theme.backgroundDefault }]}
-            onPress={(e) => e.stopPropagation()}
+            key={opt.key}
+            onPress={() => changeTheme(opt.key)}
+            style={[styles.sheetOption, idx < THEME_OPTIONS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: theme.border }]}
           >
-            <View style={[styles.modalHandle, { backgroundColor: theme.border }]} />
-            <ThemedText type="h3" style={styles.modalTitle}>{t.settings.theme}</ThemedText>
-            {THEME_OPTIONS.map((opt, idx) => (
-              <Pressable
-                key={opt.key}
-                onPress={() => changeTheme(opt.key)}
-                style={[
-                  styles.modalOption,
-                  { borderColor: theme.border },
-                  idx < THEME_OPTIONS.length - 1 ? { borderBottomWidth: 1 } : {},
-                ]}
-              >
-                <View style={[styles.modalOptionIcon, { backgroundColor: theme.primary + "15" }]}>
-                  <Feather name={opt.icon} size={20} color={theme.primary} />
-                </View>
-                <ThemedText type="body" style={{ flex: 1 }}>{opt.label}</ThemedText>
-                {selectedTheme === opt.key ? (
-                  <Feather name="check" size={20} color={theme.primary} />
-                ) : null}
-              </Pressable>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* LANGUAGE MODAL */}
-      <Modal
-        visible={showLanguageModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowLanguageModal(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setShowLanguageModal(false)}>
-          <Pressable
-            style={[styles.modal, { backgroundColor: theme.backgroundDefault }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={[styles.modalHandle, { backgroundColor: theme.border }]} />
-            <ThemedText type="h3" style={styles.modalTitle}>{t.settings.language}</ThemedText>
-            {LANGUAGES.map((lang, idx) => (
-              <Pressable
-                key={lang.code}
-                onPress={() => {
-                  setLanguage(lang.code);
-                  setShowLanguageModal(false);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-                style={[
-                  styles.modalOption,
-                  { borderColor: theme.border },
-                  idx < LANGUAGES.length - 1 ? { borderBottomWidth: 1 } : {},
-                ]}
-              >
-                <View style={[styles.modalOptionIcon, { backgroundColor: theme.primary + "15" }]}>
-                  <ThemedText style={{ fontSize: 18 }}>
-                    {lang.code === "en" ? "EN" : "हि"}
-                  </ThemedText>
-                </View>
-                <ThemedText type="body" style={{ flex: 1 }}>{lang.name}</ThemedText>
-                {language === lang.code ? (
-                  <Feather name="check" size={20} color={theme.primary} />
-                ) : null}
-              </Pressable>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* IMAGE MODAL */}
-      <Modal
-        visible={showImageModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowImageModal(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setShowImageModal(false)}>
-          <Pressable
-            style={[styles.modal, { backgroundColor: theme.backgroundDefault }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={[styles.modalHandle, { backgroundColor: theme.border }]} />
-            <ThemedText type="h3" style={styles.modalTitle}>Change Photo</ThemedText>
-            <Pressable
-              style={[styles.modalOption, { borderColor: theme.border, borderBottomWidth: 1 }]}
-              onPress={() => pickImage(true)}
-            >
-              <View style={[styles.modalOptionIcon, { backgroundColor: theme.primary + "15" }]}>
-                <Feather name="camera" size={20} color={theme.primary} />
-              </View>
-              <ThemedText type="body">Take Photo</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.modalOption, { borderColor: theme.border }]}
-              onPress={() => pickImage(false)}
-            >
-              <View style={[styles.modalOptionIcon, { backgroundColor: theme.presentGreen + "15" }]}>
-                <Feather name="image" size={20} color={theme.presentGreen} />
-              </View>
-              <ThemedText type="body">Choose from Gallery</ThemedText>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* NAME EDIT MODAL */}
-      <Modal
-        visible={showNameModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowNameModal(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setShowNameModal(false)}>
-          <Pressable
-            style={[styles.modal, { backgroundColor: theme.backgroundDefault }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={[styles.modalHandle, { backgroundColor: theme.border }]} />
-            <ThemedText type="h3" style={styles.modalTitle}>Edit Name</ThemedText>
-            <View style={[styles.nameInputRow, { borderColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
-              <TextInput
-                style={[styles.nameInput, { color: theme.text }]}
-                value={editingName}
-                onChangeText={setEditingName}
-                autoFocus
-                placeholder="Your name"
-                placeholderTextColor={theme.textSecondary}
-                returnKeyType="done"
-                onSubmitEditing={handleSaveName}
-              />
+            <View style={[styles.sheetOptionIcon, { backgroundColor: theme.primary + "18" }]}>
+              <Feather name={opt.icon} size={20} color={theme.primary} />
             </View>
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setShowNameModal(false)}
-                style={[styles.modalCancelBtn, { borderColor: theme.border }]}
-              >
-                <ThemedText type="body" style={{ color: theme.textSecondary }}>{t.common.cancel}</ThemedText>
-              </Pressable>
-              <Pressable
-                onPress={handleSaveName}
-                style={[styles.modalSaveBtn, { backgroundColor: theme.primary }]}
-              >
-                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "700" }}>{t.common.save}</ThemedText>
-              </Pressable>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.sheetOptionLabel}>{opt.label}</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>{opt.desc}</ThemedText>
             </View>
+            {selectedTheme === opt.key ? (
+              <View style={[styles.sheetCheck, { backgroundColor: theme.primary }]}>
+                <Feather name="check" size={14} color="#fff" />
+              </View>
+            ) : (
+              <View style={[styles.sheetCheckEmpty, { borderColor: theme.border }]} />
+            )}
           </Pressable>
+        ))}
+      </BottomSheet>
+
+      {/* ── LANGUAGE BOTTOM SHEET ── */}
+      <BottomSheet visible={showLangSheet} onClose={() => setShowLangSheet(false)} title={t.settings.language} theme={theme}>
+        {LANGUAGES.map((lang, idx) => (
+          <Pressable
+            key={lang.code}
+            onPress={() => { setLanguage(lang.code); setShowLangSheet(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            style={[styles.sheetOption, idx < LANGUAGES.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: theme.border }]}
+          >
+            <View style={[styles.sheetFlagBox, { backgroundColor: theme.primary + "18" }]}>
+              <ThemedText style={[styles.sheetFlagText, { color: theme.primary }]}>{lang.flag}</ThemedText>
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.sheetOptionLabel}>{lang.name}</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>{lang.native}</ThemedText>
+            </View>
+            {language === lang.code ? (
+              <View style={[styles.sheetCheck, { backgroundColor: theme.primary }]}>
+                <Feather name="check" size={14} color="#fff" />
+              </View>
+            ) : (
+              <View style={[styles.sheetCheckEmpty, { borderColor: theme.border }]} />
+            )}
+          </Pressable>
+        ))}
+      </BottomSheet>
+
+      {/* ── IMAGE BOTTOM SHEET ── */}
+      <BottomSheet visible={showImageSheet} onClose={() => setShowImageSheet(false)} title="Change Photo" theme={theme}>
+        <Pressable
+          onPress={() => pickImage(true)}
+          style={[styles.sheetOption, { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: theme.border }]}
+        >
+          <View style={[styles.sheetOptionIcon, { backgroundColor: "#FF6B3518" }]}>
+            <Feather name="camera" size={20} color="#FF6B35" />
+          </View>
+          <ThemedText style={styles.sheetOptionLabel}>Take Photo</ThemedText>
         </Pressable>
-      </Modal>
+        <Pressable onPress={() => pickImage(false)} style={styles.sheetOption}>
+          <View style={[styles.sheetOptionIcon, { backgroundColor: "#4CAF5018" }]}>
+            <Feather name="image" size={20} color="#4CAF50" />
+          </View>
+          <ThemedText style={styles.sheetOptionLabel}>Choose from Gallery</ThemedText>
+        </Pressable>
+      </BottomSheet>
+
+      {/* ── NAME EDIT BOTTOM SHEET ── */}
+      <BottomSheet visible={showNameSheet} onClose={() => setShowNameSheet(false)} title="Edit Name" theme={theme}>
+        <View style={[styles.nameInputWrap, { borderColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
+          <Feather name="user" size={18} color={theme.textSecondary} style={{ marginRight: Spacing.sm }} />
+          <TextInput
+            style={[styles.nameInput, { color: theme.text }]}
+            value={editingName}
+            onChangeText={setEditingName}
+            autoFocus
+            placeholder="Your name"
+            placeholderTextColor={theme.textSecondary}
+            returnKeyType="done"
+            onSubmitEditing={handleSaveName}
+          />
+        </View>
+        <View style={styles.nameActions}>
+          <Pressable onPress={() => setShowNameSheet(false)} style={[styles.nameCancelBtn, { borderColor: theme.border }]}>
+            <ThemedText style={{ color: theme.textSecondary, fontWeight: "600" }}>{t.common.cancel}</ThemedText>
+          </Pressable>
+          <Pressable onPress={handleSaveName} style={{ flex: 1 }}>
+            <LinearGradient colors={["#FF6B35", "#FF8C35"]} style={styles.nameSaveBtn}>
+              <ThemedText style={{ color: "#fff", fontWeight: "700" }}>{t.common.save}</ThemedText>
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </BottomSheet>
+
     </ThemedView>
   );
 }
 
+const CARD_RADIUS = 20;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl * 1.5,
-    marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-  },
-  avatarContainer: {
-    marginBottom: Spacing.lg,
-    position: "relative",
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarEditBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 40,
-    fontWeight: "bold",
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.xs,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  userEmail: {
-    fontSize: 14,
-    opacity: 0.6,
+  container: { flex: 1 },
+
+  // ─ Section labels ──────────────────
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
     marginBottom: Spacing.sm,
+    marginTop: Spacing.xl,
+    marginLeft: Spacing.xs,
   },
-  roleBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.xs,
-  },
-  sectionHeader: {
-    marginHorizontal: Spacing.lg + Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  section: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
-  },
-  itemsContainer: {
-    borderRadius: BorderRadius.xl,
+
+  // ─ Card ────────────────────────────
+  card: {
+    borderRadius: CARD_RADIUS,
     overflow: "hidden",
   },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 64,
-  },
-  item: {
+
+  // ─ Row ─────────────────────────────
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
-    height: 64,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 2,
+    minHeight: 60,
   },
-  itemIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  rowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.md,
   },
-  itemText: {
-    flex: 1,
-    fontSize: 17,
+  rowContent: { flex: 1 },
+  rowLabel: { fontSize: 15.5, fontWeight: "500" },
+  rowSublabel: { marginTop: 2, fontSize: 12 },
+  rowRight: { flexDirection: "row", alignItems: "center" },
+  rowDivider: { height: StyleSheet.hairlineWidth, marginLeft: 68 },
+  valuePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  valuePillText: { fontSize: 13, fontWeight: "600" },
+
+  // ─ Hero Card ───────────────────────
+  heroCard: { borderRadius: CARD_RADIUS + 4, overflow: "hidden", marginBottom: Spacing.md },
+  heroGradient: { padding: Spacing.xl, paddingBottom: Spacing.lg, position: "relative" },
+  heroBubble1: {
+    position: "absolute", width: 160, height: 160, borderRadius: 80,
+    backgroundColor: "#FF6B3510", top: -40, right: -40,
   },
-  itemRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
+  heroBubble2: {
+    position: "absolute", width: 100, height: 100, borderRadius: 50,
+    backgroundColor: "#FFFFFF08", bottom: -20, left: 40,
   },
-  itemValue: {
-    fontSize: 16,
-    opacity: 0.5,
+  heroContent: { flexDirection: "row", alignItems: "center" },
+  heroAvatarWrap: { position: "relative", marginRight: Spacing.lg },
+  heroAvatar: {
+    width: 76, height: 76, borderRadius: 38,
+    justifyContent: "center", alignItems: "center",
+    borderWidth: 3, borderColor: "rgba(255,255,255,0.25)",
   },
-  guestCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
+  heroAvatarText: { color: "#FFFFFF", fontSize: 30, fontWeight: "800" },
+  heroAvatarBadge: {
+    position: "absolute", bottom: 2, right: 2,
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: "#FF6B35", justifyContent: "center", alignItems: "center",
+    borderWidth: 2, borderColor: "#1E3A5F",
+  },
+  heroInfo: { flex: 1 },
+  heroNameRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  heroName: { color: "#FFFFFF", fontSize: 20, fontWeight: "700" },
+  heroEditBadge: {
+    marginLeft: 8, width: 20, height: 20, borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center",
+  },
+  heroEmail: { color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: Spacing.sm },
+  heroBadgeRow: { flexDirection: "row", gap: 8 },
+  adminBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "#FF6B3522", paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20,
+  },
+  adminBadgeText: { color: "#FF6B35", fontSize: 11, fontWeight: "700" },
+  heroEditBtn: {
+    marginTop: Spacing.lg,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: 20,
     borderWidth: 1,
-    alignItems: "center",
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  signInBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.sm,
+  heroEditBtnText: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
+
+  // ─ Guest Banner ─────────────────────
+  guestBanner: {
+    flexDirection: "row", alignItems: "center", gap: Spacing.md,
+    padding: Spacing.lg, borderRadius: CARD_RADIUS, borderWidth: 1,
+    marginBottom: Spacing.sm,
   },
-  versionContainer: {
-    paddingVertical: Spacing.xl,
-    alignItems: "center",
+  guestBannerTitle: { fontWeight: "700", marginBottom: 2 },
+  guestSignInBtn: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: 20,
   },
-  versionText: {
-    fontSize: 12,
-    opacity: 0.3,
+
+  // ─ Subscription Card ─────────────────
+  subCard: {
+    borderRadius: CARD_RADIUS, padding: Spacing.xl,
+    flexDirection: "row", alignItems: "center",
+    marginBottom: Spacing.xs, marginTop: Spacing.xl,
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
+  subCardLeft: { flex: 1, marginRight: Spacing.lg },
+  subPlanBadge: {
+    alignSelf: "flex-start", backgroundColor: "#FF6B3522",
+    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginBottom: Spacing.sm,
   },
-  modal: {
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    paddingBottom: Spacing.xl * 2,
+  subPlanBadgeText: { color: "#FF6B35", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+  subTitle: { color: "#FFFFFF", fontSize: 17, fontWeight: "700", marginBottom: 6 },
+  subDesc: { color: "rgba(255,255,255,0.55)", fontSize: 12, lineHeight: 17 },
+  subUpgradeBtn: { borderRadius: 16, overflow: "hidden" },
+  subUpgradeGrad: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderRadius: 16 },
+  subUpgradeText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
+
+  // ─ Logout ──────────────────────────
+  logoutBtn: {
+    flexDirection: "row", alignItems: "center",
+    borderWidth: 1.5, borderRadius: CARD_RADIUS,
+    padding: Spacing.lg, marginTop: Spacing.xl,
   },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: Spacing.lg,
+  logoutIcon: {
+    width: 38, height: 38, borderRadius: 11,
+    justifyContent: "center", alignItems: "center", marginRight: Spacing.md,
   },
-  modalTitle: {
-    marginBottom: Spacing.lg,
+  logoutText: { fontSize: 15.5, fontWeight: "600", color: "#EF5350", flex: 1 },
+
+  // ─ Version ─────────────────────────
+  versionFooter: { textAlign: "center", fontSize: 12, marginTop: Spacing["3xl"], lineHeight: 20, opacity: 0.4 },
+
+  // ─ Overlay / Bottom Sheet ──────────
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "flex-end" },
+  sheet: {
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: Spacing.xl, paddingTop: Spacing.lg,
   },
-  modalOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: Spacing.xl },
+  sheetTitle: { fontWeight: "700", marginBottom: Spacing.lg },
+  sheetOption: {
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: Spacing.lg, gap: Spacing.md,
   },
-  modalOptionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.xs,
-    justifyContent: "center",
-    alignItems: "center",
+  sheetOptionIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  sheetOptionLabel: { fontSize: 16, fontWeight: "600" },
+  sheetFlagBox: { width: 44, height: 44, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  sheetFlagText: { fontSize: 16, fontWeight: "700" },
+  sheetCheck: { width: 26, height: 26, borderRadius: 13, justifyContent: "center", alignItems: "center" },
+  sheetCheckEmpty: { width: 26, height: 26, borderRadius: 13, borderWidth: 2 },
+
+  // ─ Name Edit ───────────────────────
+  nameInputWrap: {
+    flexDirection: "row", alignItems: "center",
+    borderWidth: 1, borderRadius: 14, paddingHorizontal: Spacing.md,
+    height: 52, marginBottom: Spacing.lg,
   },
-  nameInputRow: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
-    height: 52,
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
+  nameInput: { flex: 1, fontSize: 16 },
+  nameActions: { flexDirection: "row", gap: Spacing.md },
+  nameCancelBtn: {
+    flex: 1, height: 50, borderRadius: 14, borderWidth: 1.5,
+    justifyContent: "center", alignItems: "center",
   },
-  nameInput: {
-    fontSize: 17,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  modalCancelBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalSaveBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: BorderRadius.sm,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  nameSaveBtn: { height: 50, borderRadius: 14, justifyContent: "center", alignItems: "center" },
 });
