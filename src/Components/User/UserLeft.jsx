@@ -14,7 +14,7 @@ const UserLeft = () => {
   <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">{UserInfo.Name}</span></h1>
 
               <h3 className='text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 font-extrabold text-4xl mb-3'>{UserInfo.Role}</h3>
-              <p className="text-slate-400 font-bold ">{UserInfo.Description}</p>
+              <p className="text-slate-500 font-semibold ">{UserInfo.Description}</p>
          <Button/>
 
         <div className="flex gap-10">
@@ -27,7 +27,7 @@ const UserLeft = () => {
           <a href="mailto:sandippandit896@gmail.com">
             <IoIosMail  className='mt-12 text-3xl text-neutral-400 cursor-pointer hover:-translate-y-2 text-slate-400 hover:text-cyan-400 transition-all scale-110'/>
           </a>
-          <a href="tel:+910000000000">
+          <a href="tel:+917058222107">
             <IoMdCall  className='mt-12 text-3xl text-neutral-400 cursor-pointer hover:-translate-y-2 text-slate-400 hover:text-cyan-400 transition-all scale-110'/>
           </a>
         </div>

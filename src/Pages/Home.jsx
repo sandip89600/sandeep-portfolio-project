@@ -2,6 +2,7 @@ import React from 'react'
 import { images } from '../assets/Data'
 import UserLeft from '../Components/User/UserLeft'
 import Professional from '../Components/Professional/Professional'
+import Pricing from '../Components/Pricing'
 
 const Home = () => {
   return (
@@ -11,10 +12,12 @@ const Home = () => {
           <UserLeft />
         </div>
         <div className="w-full lg:w-1/2 flex justify-center items-center">
-          <img className='object-cover hover:scale-105 duration-500 w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full border-4 border-cyan-400/80 shadow-[0_0_40px_rgba(255,138,0,0.35)]'  src={images.hero} alt="Hero" />
+        <img src={images.bg} className='relative left-[350px] top-[90px]' alt="" />
+          <img className='object-cover hover:scale-105 duration-500 w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 z-1'  src={images.hero} alt="Hero" />
         </div>
       </section>
 <Professional/> 
+<Pricing/>
     </>
   )
 }

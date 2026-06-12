@@ -15,9 +15,9 @@ const Professional = () => {
                     
                     <div className="flex flex-wrap items-center justify-center gap-6 mt-16">
                     {professionServices.map((val, index) =>(
-                      <div className="bg-[#13213d] border border-slate-800 p-8 rounded-2xl shadow-lg hover:shadow-orange-500/10 transition-all duration-300 w-full max-w-sm text-left group" key={index}>
+                      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 border border-slate-800 p-8 rounded-2xl shadow-lg hover:shadow-orange-500/10 transition-all duration-300 w-full max-w-sm text-left group" key={index}>
                         <h2 className='text-2xl font-semibold text-white mb-4 group-hover:text-orange-500 transition-colors'>{val.ProTitle}</h2>
-                        <p className='text-slate-400 mb-6 leading-relaxed'>{val.ProDesc}</p>
+                        <p className='text-slate-900 mb-6 leading-relaxed'>{val.ProDesc}</p>
                        <a href="https://wa.me/+917058222107" target='_blank'> <button className='border cursor-pointer border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-6 py-2 rounded-full font-medium transition-all'>{val.button}</button></a>
                       </div>
                     ))}

@@ -4,9 +4,10 @@ import { Route, Routes } from 'react-router-dom'
 import Home from './Pages/Home'
 import Projects from './Pages/Projects'
 import Contact from './Pages/Contact'
-import Footer from './Components/Footer'
 import Experience from './Pages/Experience'
 import About from './Pages/About'
+import Footer from './Components/Footer'
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path='/experience' element={<Experience />} />
         <Route path='/contact' element={<Contact />} />
       </Routes>
+      <Footer/>
       </div>
   )
 }

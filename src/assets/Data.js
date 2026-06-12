@@ -1,36 +1,40 @@
-import image1 from './Images/Image.jpg';
+import bg from './Images/bg.png';
+import image1 from './Images/Image.png';
 import image2 from './Images/portfolio03.jpeg'
 import image3 from './Images/portfolio02.jpeg'
+import image4 from './Images/portfolio01.jpeg'
 import { Link } from 'react-router-dom';
 
 
 export const images = {
 hero: image1,
+bg:bg
 }
 
 
 export const UserInfo = {
   Name: "Sandeep Pandit",
     Role: "Full Stack Web Developer",
-    Description: "Currently-learning Full Stack Web Developer with hands-on experience in frontend technologies and a proven track record of delivering impactful web solutions."
+    Description: " Full Stack Web Developer with hands-on experience in frontend technologies and a proven track record of delivering impactful web solutions."
 }
 
 export const ProjectData = [
     {
         id: 1,
         projectName: 'Food Delivery Application',
+        portfolio:image4,
         tech: "HTML, CSS, JavaScript, Bootstrap",
         About: "Comprehensive food delivery web application developed as a college project.",
         Description1: "Responsive design compatible across multiple devices",
         Description2: "Intuitive user interface with focus on user experience",
         Description3: "Full project lifecycle management from concept to deployment",
-        link: "/"
+        link: "https://sandip89600.github.io/Food-Website/"
       },
     {
         id: 2,
         projectName: 'E-commerce Shopping Website',
         portfolio:image3,
-        tech: " Bootstrap",
+        tech: "HTML ,Bootstrap, JS",
         About: "Fully functional online shopping platform.",
         Description1: "Product catalog, shopping cart, and checkout functionality",
         Description2: "Achieved 15% increase in client sales through optimized UX",
@@ -56,41 +60,23 @@ export const ProjectData = [
 export const ExperienceData = [
   {
     id: 1,
-    title: "Web Development Intern",
+    title: "Junior Web Developer Intern",
     duration: "July 2024 - August 2024",
     company: "My Daily Work Company",
-    achievements: [
-      "Developed responsive Personal Portfolio website using HTML, CSS, and JavaScript",
-      "Created engaging Landing Page with optimized user experience and conversion focus",
-      "Built functional Basic Calculator application demonstrating JavaScript proficiency",
-      "Collaborated with team to deliver projects within specified timelines"
-    ],
     certificate: "https://www.sandeeppandit.shop/Post/index.html"
   },
   {
     id: 2,
-    title: "Web Development Intern",
+    title: "Web Developer Intern",
     duration: "November 2024 - January 2025",
-    company: "Yhills Edutech Company",
-    achievements: [
-      "Designed and developed Personal Portfolio showcasing technical capabilities",
-      "Created Bootstrap-based e-commerce shopping website with responsive design",
-      "Implemented SEO best practices resulting in 40% improvement in search visibility",
-      "Contributed to 15% sales growth through optimized e-commerce site development"
-    ],
-    certificate: "https://www.sandeeppandit.shop/Post/post.html"
+    company: "Yhills Edutech Company", 
+  certificate: "https://www.sandeeppandit.shop/Post/post.html"
   },
   {
     id: 3,
-    title: "Full Stack Web Development Program",
+    title: "Full Stack Web Developer",
     duration: "May 2025 - Present",
     company: "A2Z ITHub",
-    achievements: [
-      "Currently enrolled in a comprehensive Full Stack Web Development Program",
-      "Learning and building projects using HTML, CSS, JavaScript, React, Node.js, Express, and MongoDB",
-      "Developing real-world web applications and responsive user interfaces",
-      "Expected completion: November 2025"
-    ],
     certificate: "#"
   }
 ];
