@@ -1,14 +1,16 @@
 import image1 from './Images/Image.jpg';
+import image2 from './Images/portfolio03.jpeg'
+import image3 from './Images/portfolio02.jpeg'
 import { Link } from 'react-router-dom';
 
 
 export const images = {
-    hero: image1,
-};
+hero: image1,
+}
 
 
 export const UserInfo = {
-    Name: "Sandeep Pandit",
+  Name: "Sandeep Pandit",
     Role: "Full Stack Web Developer",
     Description: "Currently-learning Full Stack Web Developer with hands-on experience in frontend technologies and a proven track record of delivering impactful web solutions."
 }
@@ -23,10 +25,11 @@ export const ProjectData = [
         Description2: "Intuitive user interface with focus on user experience",
         Description3: "Full project lifecycle management from concept to deployment",
         link: "/"
-    },
+      },
     {
         id: 2,
         projectName: 'E-commerce Shopping Website',
+        portfolio:image3,
         tech: " Bootstrap",
         About: "Fully functional online shopping platform.",
         Description1: "Product catalog, shopping cart, and checkout functionality",
@@ -35,8 +38,9 @@ export const ProjectData = [
         link: "https://e-commerce-website-xi-lilac.vercel.app/"
     },
     {
-        id: 3,
-        projectName: 'Personal Portfolio Collection',
+      id: 3,
+      projectName: 'Personal Portfolio Collection',
+      portfolio:image2,
         tech: "HTML, CSS, JavaScript, Bootstrap",
         About: "Multiple portfolio websites showcasing web development skills.",
         Description1: "Optimized designs resulting in 30% increase in web traffic",
@@ -89,4 +93,67 @@ export const ExperienceData = [
     ],
     certificate: "#"
   }
+];
+
+
+
+export const professionServicesTitle = [
+  {
+    id:"1",
+  title:"Professional Services",
+  info:"From career tools to full web development—here are the core services I offer, designed for maximum visibility and impact.",
+  icon:""
+  }
+
+]
+export const professionServices = [
+  {
+    id:"1",
+     ProTitle:"Resume Design",
+    ProDesc:"ATS-friendly design & tailored content layouts.",
+    button:"Design"
+  },
+  {
+    id:"2",
+     ProTitle:"Resume Review",
+    ProDesc:"Detailed review, keyword optimization & formatting fixes.",
+    button:"Review"
+  },
+  {
+    id:"3",
+     ProTitle:"Cover Letter",
+    ProDesc:"Custom letters to match job descriptions and increase invites.",
+    button:"Write"
+  },
+  {
+    id:"4",
+     ProTitle:"LinkedIn / Portfolios",
+    ProDesc:"Profile copy, project storytelling & SEO optimization.",
+    button:"Optimize"
+  },
+  {
+    id:"5",
+     ProTitle:"Website — Scratch",
+    ProDesc:"Full packages: landing pages, portfolios, or company sites.",
+    button:"Start Web"
+  },
+  {
+    id:"6",
+     ProTitle:"SEO & Hosting",
+    ProDesc:"Setup, UI/UX improvements, hosting & ongoing maintenance.",
+    button:"Discuss"
+  },
+]
+
+
+
+
+
+export  const technicalSkills = [
+  { name: "HTML5", percentage: 90 },
+  { name: "CSS3", percentage: 85 },
+  { name: "JavaScript", percentage: 75 },
+  { name: "Bootstrap", percentage: 80 },
+  { name: "React JS", percentage: 88 },
+  { name: "Git & GitHub", percentage: 82 },
 ];

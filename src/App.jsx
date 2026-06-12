@@ -6,19 +6,20 @@ import Projects from './Pages/Projects'
 import Contact from './Pages/Contact'
 import Footer from './Components/Footer'
 import Experience from './Pages/Experience'
+import About from './Pages/About'
 
 const App = () => {
   return (
-    <div className='bg-linear-to-b from-[#0A0F1E] via-[#0E1630] to-[#121C3A] text-white w-full min-h-screen'>
+    <div className='bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950  text-white w-full min-h-screen'>
       <Navbar />
       <Routes>
         <Route path='/' element={<Home />} />
+        <Route path='/about' element={<About/>} />
         <Route path='/projects' element={<Projects />} />
         <Route path='/experience' element={<Experience />} />
         <Route path='/contact' element={<Contact />} />
       </Routes>
-      <Footer/>
-    </div>
+      </div>
   )
 }
 
