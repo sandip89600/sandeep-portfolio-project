@@ -67,12 +67,15 @@ function WorkerCard({
     return colors[category] || theme.primary;
   };
 
-  const initials = worker.name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = (
+    worker.name
+      .split(" ")
+      .filter((w) => w.length > 0)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?"
+  );
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()}>

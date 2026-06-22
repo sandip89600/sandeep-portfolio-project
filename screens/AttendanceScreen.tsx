@@ -7,14 +7,12 @@ import {
   Modal,
   TextInput,
   Alert,
-  Dimensions,
   Platform,
   ActivityIndicator,
   Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -55,18 +53,10 @@ function AttendanceCell({ value, onPress, theme }: AttendanceCellProps) {
   }));
 
   const getCellStyle = () => {
-    if (value === "P") {
-      return { backgroundColor: theme.presentGreen };
-    }
-    if (value === "A") {
-      return { backgroundColor: theme.absentRed };
-    }
-    if (value === "H") {
-      return { backgroundColor: theme.halfDayYellow };
-    }
-    if (typeof value === "number") {
-      return { backgroundColor: theme.amountBlue };
-    }
+    if (value === "P") return { backgroundColor: theme.presentGreen };
+    if (value === "A") return { backgroundColor: theme.absentRed };
+    if (value === "H") return { backgroundColor: theme.halfDayYellow };
+    if (typeof value === "number") return { backgroundColor: theme.amountBlue };
     return { backgroundColor: theme.backgroundDefault };
   };
 
@@ -91,12 +81,8 @@ function AttendanceCell({ value, onPress, theme }: AttendanceCellProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      onPressIn={() => {
-        scale.value = withSpring(0.95);
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1);
-      }}
+      onPressIn={() => { scale.value = withSpring(0.95); }}
+      onPressOut={() => { scale.value = withSpring(1); }}
       style={[styles.cell, getCellStyle(), animatedStyle]}
     >
       <ThemedText
@@ -130,24 +116,17 @@ export default function AttendanceScreen() {
   const [customAmount, setCustomAmount] = useState("");
   const [capturedLocation, setCapturedLocation] = useState<GPSLocation | null>(null);
   const [isCapturingGPS, setIsCapturingGPS] = useState(false);
+  const [gridHeight, setGridHeight] = useState(0);
 
-  const horizontalScrollRef = useRef<ScrollView>(null);
-  const verticalScrollRef = useRef<ScrollView>(null);
+  // Refs for synchronized scrolling
+  const namesScrollRef = useRef<ScrollView>(null);
+  const cellsScrollRef = useRef<ScrollView>(null);
 
   const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
   const monthNames = [
-    t.months.january,
-    t.months.february,
-    t.months.march,
-    t.months.april,
-    t.months.may,
-    t.months.june,
-    t.months.july,
-    t.months.august,
-    t.months.september,
-    t.months.october,
-    t.months.november,
-    t.months.december,
+    t.months.january, t.months.february, t.months.march, t.months.april,
+    t.months.may, t.months.june, t.months.july, t.months.august,
+    t.months.september, t.months.october, t.months.november, t.months.december,
   ];
 
   useEffect(() => {
@@ -158,10 +137,7 @@ export default function AttendanceScreen() {
     setIsLoading(true);
     try {
       const loadedWorkers = await storage.getWorkers();
-      const loadedAttendance = await storage.getAttendanceForMonth(
-        selectedYear,
-        selectedMonth
-      );
+      const loadedAttendance = await storage.getAttendanceForMonth(selectedYear, selectedMonth);
       setWorkers(loadedWorkers);
       setAttendance(loadedAttendance);
     } finally {
@@ -169,16 +145,9 @@ export default function AttendanceScreen() {
     }
   };
 
-  const getAttendanceValue = (
-    workerId: string,
-    day: number
-  ): AttendanceValue | null => {
+  const getAttendanceValue = (workerId: string, day: number): AttendanceValue | null => {
     const record = attendance.find(
-      (a) =>
-        a.workerId === workerId &&
-        a.year === selectedYear &&
-        a.month === selectedMonth &&
-        a.day === day
+      (a) => a.workerId === workerId && a.year === selectedYear && a.month === selectedMonth && a.day === day
     );
     return record?.value ?? null;
   };
@@ -247,6 +216,10 @@ export default function AttendanceScreen() {
     }
   };
 
+  const handleVerticalScroll = (y: number) => {
+    namesScrollRef.current?.scrollTo({ y, animated: false });
+  };
+
   const renderMonthPicker = () => (
     <Modal
       visible={showMonthPicker}
@@ -254,28 +227,14 @@ export default function AttendanceScreen() {
       animationType="fade"
       onRequestClose={() => setShowMonthPicker(false)}
     >
-      <Pressable
-        style={styles.modalOverlay}
-        onPress={() => setShowMonthPicker(false)}
-      >
-        <View
-          style={[
-            styles.monthPickerContainer,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
+      <Pressable style={styles.modalOverlay} onPress={() => setShowMonthPicker(false)}>
+        <View style={[styles.monthPickerContainer, { backgroundColor: theme.backgroundDefault }]}>
           <View style={styles.yearSelector}>
-            <Pressable
-              onPress={() => setSelectedYear(selectedYear - 1)}
-              style={styles.yearArrow}
-            >
+            <Pressable onPress={() => setSelectedYear(selectedYear - 1)} style={styles.yearArrow}>
               <Feather name="chevron-left" size={24} color={theme.text} />
             </Pressable>
             <ThemedText type="h3">{selectedYear}</ThemedText>
-            <Pressable
-              onPress={() => setSelectedYear(selectedYear + 1)}
-              style={styles.yearArrow}
-            >
+            <Pressable onPress={() => setSelectedYear(selectedYear + 1)} style={styles.yearArrow}>
               <Feather name="chevron-right" size={24} color={theme.text} />
             </Pressable>
           </View>
@@ -283,26 +242,15 @@ export default function AttendanceScreen() {
             {monthNames.map((month, index) => (
               <Pressable
                 key={index}
-                onPress={() => {
-                  setSelectedMonth(index);
-                  setShowMonthPicker(false);
-                }}
+                onPress={() => { setSelectedMonth(index); setShowMonthPicker(false); }}
                 style={[
                   styles.monthItem,
-                  {
-                    backgroundColor:
-                      selectedMonth === index
-                        ? theme.primary
-                        : "transparent",
-                  },
+                  { backgroundColor: selectedMonth === index ? theme.primary : "transparent" },
                 ]}
               >
                 <ThemedText
                   type="small"
-                  style={{
-                    color:
-                      selectedMonth === index ? "#FFFFFF" : theme.text,
-                  }}
+                  style={{ color: selectedMonth === index ? "#FFFFFF" : theme.text }}
                 >
                   {month.substring(0, 3)}
                 </ThemedText>
@@ -321,16 +269,8 @@ export default function AttendanceScreen() {
       animationType="fade"
       onRequestClose={() => setShowInputModal(false)}
     >
-      <Pressable
-        style={styles.modalOverlay}
-        onPress={() => setShowInputModal(false)}
-      >
-        <View
-          style={[
-            styles.inputModalContainer,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
+      <Pressable style={styles.modalOverlay} onPress={() => setShowInputModal(false)}>
+        <View style={[styles.inputModalContainer, { backgroundColor: theme.backgroundDefault }]}>
           <ThemedText type="h3" style={styles.inputModalTitle}>
             {t.attendance.tapToMark}
           </ThemedText>
@@ -338,36 +278,21 @@ export default function AttendanceScreen() {
           <View style={styles.quickOptions}>
             <Pressable
               onPress={() => markAttendance("P")}
-              style={[
-                styles.quickOption,
-                { backgroundColor: theme.presentGreen },
-              ]}
+              style={[styles.quickOption, { backgroundColor: theme.presentGreen }]}
             >
-              <ThemedText style={styles.quickOptionText}>
-                {t.attendance.present}
-              </ThemedText>
+              <ThemedText style={styles.quickOptionText}>{t.attendance.present}</ThemedText>
             </Pressable>
             <Pressable
               onPress={() => markAttendance("A")}
-              style={[
-                styles.quickOption,
-                { backgroundColor: theme.absentRed },
-              ]}
+              style={[styles.quickOption, { backgroundColor: theme.absentRed }]}
             >
-              <ThemedText style={styles.quickOptionText}>
-                {t.attendance.absent}
-              </ThemedText>
+              <ThemedText style={styles.quickOptionText}>{t.attendance.absent}</ThemedText>
             </Pressable>
             <Pressable
               onPress={() => markAttendance("H")}
-              style={[
-                styles.quickOption,
-                { backgroundColor: theme.halfDayYellow },
-              ]}
+              style={[styles.quickOption, { backgroundColor: theme.halfDayYellow }]}
             >
-              <ThemedText style={styles.quickOptionText}>
-                {t.attendance.halfDay}
-              </ThemedText>
+              <ThemedText style={styles.quickOptionText}>{t.attendance.halfDay}</ThemedText>
             </Pressable>
           </View>
 
@@ -375,11 +300,7 @@ export default function AttendanceScreen() {
             <TextInput
               style={[
                 styles.customAmountInput,
-                {
-                  color: theme.text,
-                  backgroundColor: theme.backgroundSecondary,
-                  borderColor: theme.border,
-                },
+                { color: theme.text, backgroundColor: theme.backgroundSecondary, borderColor: theme.border },
               ]}
               placeholder={`${t.common.currency} (100, 200, 500...)`}
               placeholderTextColor={theme.textSecondary}
@@ -395,16 +316,13 @@ export default function AttendanceScreen() {
             </Pressable>
           </View>
 
-          {/* GPS Location Capture */}
           <Pressable
             onPress={captureGPSLocation}
             disabled={isCapturingGPS}
             style={[
               styles.gpsButton,
               {
-                backgroundColor: capturedLocation
-                  ? theme.presentGreen + "15"
-                  : theme.backgroundSecondary,
+                backgroundColor: capturedLocation ? theme.presentGreen + "15" : theme.backgroundSecondary,
                 borderColor: capturedLocation ? theme.presentGreen : theme.border,
               },
             ]}
@@ -418,11 +336,7 @@ export default function AttendanceScreen() {
               type="small"
               style={{ color: capturedLocation ? theme.presentGreen : theme.textSecondary, marginLeft: 6 }}
             >
-              {isCapturingGPS
-                ? t.attendance.gpsCapturing
-                : capturedLocation
-                ? t.attendance.gpsCaptured
-                : t.attendance.captureGPS}
+              {isCapturingGPS ? t.attendance.gpsCapturing : capturedLocation ? t.attendance.gpsCaptured : t.attendance.captureGPS}
             </ThemedText>
             {capturedLocation ? (
               <Feather name="check-circle" size={14} color={theme.presentGreen} style={{ marginLeft: "auto" }} />
@@ -444,143 +358,119 @@ export default function AttendanceScreen() {
   if (workers.length === 0) {
     return (
       <ThemedView
-        style={[
-          styles.emptyContainer,
-          {
-            paddingTop: headerHeight + Spacing.xl,
-            paddingBottom: tabBarHeight + Spacing.xl,
-          },
-        ]}
+        style={[styles.emptyContainer, { paddingTop: headerHeight + Spacing.xl, paddingBottom: tabBarHeight + Spacing.xl }]}
       >
-        <Feather
-          name="users"
-          size={64}
-          color={theme.textSecondary}
-          style={styles.emptyIcon}
-        />
-        <ThemedText type="h3" style={styles.emptyTitle}>
-          {t.attendance.noWorkers}
-        </ThemedText>
-        <ThemedText
-          type="body"
-          style={[styles.emptySubtitle, { color: theme.textSecondary }]}
-        >
+        <Feather name="users" size={64} color={theme.textSecondary} style={styles.emptyIcon} />
+        <ThemedText type="h3" style={styles.emptyTitle}>{t.attendance.noWorkers}</ThemedText>
+        <ThemedText type="body" style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
           {t.attendance.addWorkerFirst}
         </ThemedText>
       </ThemedView>
     );
   }
 
+  const cellsHeight = gridHeight > 0 ? gridHeight - CELL_SIZE : undefined;
+
   return (
     <ThemedView style={styles.container}>
+      {/* Month selector */}
       <Pressable
         onPress={() => setShowMonthPicker(true)}
         style={[
           styles.monthSelector,
-          {
-            top: headerHeight + Spacing.sm,
-            backgroundColor: theme.backgroundDefault,
-            borderColor: theme.border,
-          },
+          { top: headerHeight + Spacing.sm, backgroundColor: theme.backgroundDefault, borderColor: theme.border },
         ]}
       >
-        <ThemedText type="h4">
-          {monthNames[selectedMonth]} {selectedYear}
-        </ThemedText>
+        <ThemedText type="h4">{monthNames[selectedMonth]} {selectedYear}</ThemedText>
         <Feather name="chevron-down" size={18} color={theme.text} />
       </Pressable>
 
+      {/* Grid container */}
       <View
-        style={[
-          styles.gridContainer,
-          {
-            marginTop: headerHeight + Spacing["4xl"] + Spacing.sm,
-            marginBottom: tabBarHeight,
-          },
-        ]}
+        style={[styles.gridContainer, { marginTop: headerHeight + Spacing["4xl"] + Spacing.sm, marginBottom: tabBarHeight }]}
+        onLayout={(e) => setGridHeight(e.nativeEvent.layout.height)}
       >
-        <View style={styles.gridHeader}>
-          <View
-            style={[
-              styles.cornerCell,
-              { backgroundColor: theme.primaryDark },
-            ]}
-          >
-            <ThemedText style={styles.cornerText}>
-              {t.workers.title}
-            </ThemedText>
-          </View>
-          <ScrollView
-            ref={horizontalScrollRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEventThrottle={16}
-          >
-            <View style={styles.daysRow}>
-              {Array.from({ length: daysInMonth }, (_, i) => (
+        <View style={styles.gridInner}>
+
+          {/* ── Frozen left column (worker names) ── */}
+          <View style={styles.frozenCol}>
+            {/* Corner cell */}
+            <View style={[styles.cornerCell, { backgroundColor: theme.primaryDark }]}>
+              <ThemedText style={styles.cornerText}>{t.workers.title}</ThemedText>
+            </View>
+
+            {/* Worker name cells — scroll controlled by right side */}
+            <ScrollView
+              ref={namesScrollRef}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+              style={cellsHeight ? { height: cellsHeight } : { flex: 1 }}
+            >
+              {workers.map((worker) => (
                 <View
-                  key={i}
-                  style={[
-                    styles.dayCell,
-                    { backgroundColor: theme.primaryDark },
-                  ]}
+                  key={worker.id}
+                  style={[styles.workerNameCell, { backgroundColor: theme.backgroundSecondary }]}
                 >
-                  <ThemedText style={styles.dayText}>{i + 1}</ThemedText>
+                  {worker.photoUri ? (
+                    <Image source={{ uri: worker.photoUri }} style={styles.workerAvatar} />
+                  ) : (
+                    <View style={[styles.workerAvatarPlaceholder, { backgroundColor: theme.primary + "25" }]}>
+                      <ThemedText style={[styles.workerAvatarInitial, { color: theme.primary }]}>
+                        {(worker.name || "?").charAt(0).toUpperCase()}
+                      </ThemedText>
+                    </View>
+                  )}
+                  <ThemedText type="small" style={styles.workerName} numberOfLines={2}>
+                    {worker.name}
+                  </ThemedText>
                 </View>
               ))}
-            </View>
-          </ScrollView>
-        </View>
+            </ScrollView>
+          </View>
 
-        <ScrollView
-          ref={verticalScrollRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.workersScrollContent}
-        >
-          {workers.map((worker) => (
-            <View key={worker.id} style={styles.workerRow}>
-              <View
-                style={[
-                  styles.workerNameCell,
-                  { backgroundColor: theme.backgroundSecondary },
-                ]}
-              >
-                {worker.photoUri ? (
-                  <Image source={{ uri: worker.photoUri }} style={styles.workerAvatar} />
-                ) : (
-                  <View style={[styles.workerAvatarPlaceholder, { backgroundColor: theme.primary + "25" }]}>
-                    <ThemedText style={[styles.workerAvatarInitial, { color: theme.primary }]}>
-                      {worker.name.charAt(0).toUpperCase()}
-                    </ThemedText>
+          {/* ── Right scrollable area (single horizontal ScrollView) ── */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            bounces={false}
+            style={{ flex: 1 }}
+          >
+            <View>
+              {/* Days header row — always visible at top */}
+              <View style={styles.daysHeaderRow}>
+                {Array.from({ length: daysInMonth }, (_, i) => (
+                  <View key={i} style={[styles.dayCell, { backgroundColor: theme.primaryDark }]}>
+                    <ThemedText style={styles.dayText}>{i + 1}</ThemedText>
                   </View>
-                )}
-                <ThemedText
-                  type="small"
-                  style={styles.workerName}
-                  numberOfLines={2}
-                >
-                  {worker.name}
-                </ThemedText>
+                ))}
               </View>
+
+              {/* Attendance cells — vertically scrollable, drives left column */}
               <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
+                ref={cellsScrollRef}
+                showsVerticalScrollIndicator={false}
                 scrollEventThrottle={16}
+                bounces={false}
+                style={cellsHeight ? { height: cellsHeight } : { flex: 1 }}
+                onScroll={(e) => handleVerticalScroll(e.nativeEvent.contentOffset.y)}
               >
-                <View style={styles.attendanceRow}>
-                  {Array.from({ length: daysInMonth }, (_, i) => (
-                    <AttendanceCell
-                      key={i}
-                      value={getAttendanceValue(worker.id, i + 1)}
-                      onPress={() => handleCellPress(worker.id, i + 1)}
-                      theme={theme}
-                    />
-                  ))}
-                </View>
+                {workers.map((worker) => (
+                  <View key={worker.id} style={styles.attendanceCellRow}>
+                    {Array.from({ length: daysInMonth }, (_, i) => (
+                      <AttendanceCell
+                        key={i}
+                        value={getAttendanceValue(worker.id, i + 1)}
+                        onPress={() => handleCellPress(worker.id, i + 1)}
+                        theme={theme}
+                      />
+                    ))}
+                  </View>
+                ))}
               </ScrollView>
             </View>
-          ))}
-        </ScrollView>
+          </ScrollView>
+
+        </View>
       </View>
 
       {renderMonthPicker()}
@@ -624,11 +514,19 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     zIndex: 10,
   },
+
+  // ─ Grid layout ──────────────────────────────────────
   gridContainer: {
     flex: 1,
   },
-  gridHeader: {
+  gridInner: {
+    flex: 1,
     flexDirection: "row",
+  },
+
+  // ─ Frozen left column ───────────────────────────────
+  frozenCol: {
+    width: NAME_COLUMN_WIDTH,
   },
   cornerCell: {
     width: NAME_COLUMN_WIDTH,
@@ -644,30 +542,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "600",
-  },
-  daysRow: {
-    flexDirection: "row",
-  },
-  dayCell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRightWidth: 1,
-    borderRightColor: "rgba(255,255,255,0.2)",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.2)",
-  },
-  dayText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  workersScrollContent: {
-    flexGrow: 1,
-  },
-  workerRow: {
-    flexDirection: "row",
   },
   workerNameCell: {
     width: NAME_COLUMN_WIDTH,
@@ -704,7 +578,29 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontSize: 11,
   },
-  attendanceRow: {
+
+  // ─ Days header ──────────────────────────────────────
+  daysHeaderRow: {
+    flexDirection: "row",
+  },
+  dayCell: {
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRightWidth: 1,
+    borderRightColor: "rgba(255,255,255,0.2)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.2)",
+  },
+  dayText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  // ─ Attendance cells ──────────────────────────────────
+  attendanceCellRow: {
     flexDirection: "row",
   },
   cell: {
@@ -721,6 +617,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 12,
   },
+
+  // ─ Modals ────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -766,35 +664,36 @@ const styles = StyleSheet.create({
   },
   quickOptions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },
   quickOption: {
     flex: 1,
     paddingVertical: Spacing.md,
-    marginHorizontal: Spacing.xs,
-    alignItems: "center",
     borderRadius: BorderRadius.xs,
+    alignItems: "center",
   },
   quickOptionText: {
     color: "#FFFFFF",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 14,
   },
   customAmountContainer: {
     flexDirection: "row",
     gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   customAmountInput: {
     flex: 1,
-    height: Spacing.inputHeight,
+    height: 48,
     borderRadius: BorderRadius.xs,
     borderWidth: 1,
     paddingHorizontal: Spacing.md,
     fontSize: 16,
   },
   customAmountButton: {
-    width: Spacing.inputHeight,
-    height: Spacing.inputHeight,
+    width: 48,
+    height: 48,
     borderRadius: BorderRadius.xs,
     justifyContent: "center",
     alignItems: "center",
@@ -802,10 +701,9 @@ const styles = StyleSheet.create({
   gpsButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    padding: Spacing.md,
     borderRadius: BorderRadius.xs,
     borderWidth: 1,
+    marginTop: Spacing.xs,
   },
 });
