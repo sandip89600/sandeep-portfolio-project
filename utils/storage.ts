@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { Language } from "@/constants/i18n";
 
 const STORAGE_KEYS = {
@@ -394,12 +396,65 @@ export const storage = {
     await AsyncStorage.setItem(STORAGE_KEYS_EXT.NOTIFICATION_SETTINGS, JSON.stringify(settings));
   },
 
+  async exportAllData(): Promise<string> {
+    const [workers, attendance, payments, settings, profile] = await Promise.all([
+      this.getWorkers(),
+      this.getAttendance(),
+      this.getPayments(),
+      this.getSettings(),
+      this.getProfile(),
+    ]);
+    const backup = { version: 1, exportedAt: Date.now(), appName: "Haajari", workers, attendance, payments, settings, profile };
+    return JSON.stringify(backup);
+  },
+
+  async importAllData(json: string): Promise<void> {
+    const backup = JSON.parse(json);
+    if (!backup.appName || backup.appName !== "Haajari") throw new Error("Invalid backup file");
+    await Promise.all([
+      backup.workers ? this.setWorkers(backup.workers) : Promise.resolve(),
+      backup.attendance ? this.setAttendance(backup.attendance) : Promise.resolve(),
+      backup.payments
+        ? AsyncStorage.setItem(STORAGE_KEYS_EXT.PAYMENTS, JSON.stringify(backup.payments))
+        : Promise.resolve(),
+      backup.settings ? this.setSettings(backup.settings) : Promise.resolve(),
+      backup.profile ? this.setProfile(backup.profile) : Promise.resolve(),
+    ]);
+  },
+
+  async saveBiometricCredentials(email: string, password: string): Promise<void> {
+    try {
+      if (Platform.OS === "web") return;
+      await SecureStore.setItemAsync("@haajari_bio_email", email);
+      await SecureStore.setItemAsync("@haajari_bio_pass", password);
+    } catch {}
+  },
+
+  async getBiometricCredentials(): Promise<{ email: string; password: string } | null> {
+    try {
+      if (Platform.OS === "web") return null;
+      const email = await SecureStore.getItemAsync("@haajari_bio_email");
+      const password = await SecureStore.getItemAsync("@haajari_bio_pass");
+      if (email && password) return { email, password };
+      return null;
+    } catch { return null; }
+  },
+
+  async clearBiometricCredentials(): Promise<void> {
+    try {
+      if (Platform.OS === "web") return;
+      await SecureStore.deleteItemAsync("@haajari_bio_email");
+      await SecureStore.deleteItemAsync("@haajari_bio_pass");
+    } catch {}
+  },
+
   async clearAll(): Promise<void> {
     try {
       await AsyncStorage.multiRemove([
         ...Object.values(STORAGE_KEYS),
         STORAGE_KEYS_EXT.PAYMENTS,
       ]);
+      await this.clearBiometricCredentials();
     } catch (error) {
       console.error("Error clearing storage:", error);
     }

@@ -27,6 +27,9 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as DocumentPicker from "expo-document-picker";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -184,6 +187,10 @@ export default function SettingsScreen() {
   const [editingName, setEditingName] = useState("");
   const [gpsEnabled, setGpsEnabled] = useState(false);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
+  const [showTimeSheet, setShowTimeSheet] = useState(false);
+  const [editingHour, setEditingHour] = useState(9);
+  const [editingMinute, setEditingMinute] = useState(0);
+  const [editingAmPm, setEditingAmPm] = useState<"AM" | "PM">("AM");
 
   const loadProfile = useCallback(async () => {
     const data = await storage.getProfile();
@@ -270,6 +277,81 @@ export default function SettingsScreen() {
       { text: t.common.cancel, style: "cancel" },
       { text: t.settings.logout, style: "destructive", onPress: async () => { await logout(); } },
     ]);
+  };
+
+  const handleOpenTimePicker = () => {
+    const h24 = notifSettings.reminderHour;
+    const ampm = h24 < 12 ? "AM" : "PM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    setEditingHour(h12);
+    setEditingMinute(notifSettings.reminderMinute);
+    setEditingAmPm(ampm as "AM" | "PM");
+    setShowTimeSheet(true);
+  };
+
+  const handleSaveTime = async () => {
+    const h24 = editingAmPm === "AM"
+      ? (editingHour === 12 ? 0 : editingHour)
+      : (editingHour === 12 ? 12 : editingHour + 12);
+    const updated = { ...notifSettings, reminderHour: h24, reminderMinute: editingMinute };
+    setNotifSettings(updated);
+    await storage.setNotificationSettings(updated);
+    if (notifSettings.attendanceReminderEnabled) {
+      await scheduleAttendanceReminder(h24, editingMinute);
+    }
+    setShowTimeSheet(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const handleBackup = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const json = await storage.exportAllData();
+      const filename = (FileSystem.documentDirectory ?? "") + `haajari_backup_${Date.now()}.json`;
+      await FileSystem.writeAsStringAsync(filename, json, { encoding: FileSystem.EncodingType.UTF8 });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(filename, { mimeType: "application/json", UTI: "public.json" });
+      } else {
+        Alert.alert(t.common.success, "Backup saved to device.");
+      }
+    } catch {
+      Alert.alert(t.common.error, "Failed to create backup.");
+    }
+  };
+
+  const handleRestore = () => {
+    Alert.alert(
+      "Restore Data",
+      "This will replace ALL current data with the backup. This cannot be undone.",
+      [
+        { text: t.common.cancel, style: "cancel" },
+        {
+          text: "Restore",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const result = await DocumentPicker.getDocumentAsync({
+                type: "application/json",
+                copyToCacheDirectory: true,
+              });
+              if (result.canceled) return;
+              const json = await FileSystem.readAsStringAsync(result.assets[0].uri);
+              await storage.importAllData(json);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert(t.common.success, "Data restored. Restart the app to see changes.");
+            } catch (e: any) {
+              Alert.alert(
+                t.common.error,
+                e?.message === "Invalid backup file"
+                  ? "Invalid Haajari backup file."
+                  : "Failed to restore backup."
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
   const initials = profile.name?.charAt(0)?.toUpperCase() || "A";
@@ -419,6 +501,15 @@ export default function SettingsScreen() {
               />
             }
           />
+          {notifSettings.attendanceReminderEnabled ? (
+            <Row
+              icon="clock" iconColor="#FF9800"
+              label="Reminder Time"
+              value={formatReminderTime(notifSettings.reminderHour, notifSettings.reminderMinute)}
+              onPress={handleOpenTimePicker}
+              theme={theme} delay={130}
+            />
+          ) : null}
           <Row
             icon="dollar-sign" iconColor={ORANGE}
             label={t.settings.salaryReminder}
@@ -457,6 +548,25 @@ export default function SettingsScreen() {
             </Pressable>
           </LinearGradient>
         </Animated.View>
+
+        {/* ── DATA MANAGEMENT ── */}
+        <SectionLabel label="Data Management" theme={theme} />
+        <SectionCard theme={theme}>
+          <Row
+            icon="download" iconColor="#4CAF50"
+            label="Backup Data"
+            sublabel="Export all workers & attendance as JSON"
+            onPress={handleBackup}
+            theme={theme} delay={170}
+          />
+          <Row
+            icon="upload" iconColor="#FF5722"
+            label="Restore Data"
+            sublabel="Import from a Haajari backup file"
+            onPress={handleRestore}
+            theme={theme} isLast delay={180}
+          />
+        </SectionCard>
 
         {/* ── SUPPORT & ABOUT ── */}
         <SectionLabel label="Support & About" theme={theme} />
@@ -563,6 +673,59 @@ export default function SettingsScreen() {
             <Feather name="image" size={20} color="#4CAF50" />
           </View>
           <ThemedText style={styles.sheetOptionLabel}>Choose from Gallery</ThemedText>
+        </Pressable>
+      </BottomSheet>
+
+      {/* ── TIME PICKER BOTTOM SHEET ── */}
+      <BottomSheet visible={showTimeSheet} onClose={() => setShowTimeSheet(false)} title="Set Reminder Time" theme={theme}>
+        <View style={styles.timePicker}>
+          <View style={styles.timeColumn}>
+            <Pressable onPress={() => setEditingHour(editingHour === 12 ? 1 : editingHour + 1)} style={styles.timeArrow}>
+              <Feather name="chevron-up" size={22} color={theme.primary} />
+            </Pressable>
+            <View style={[styles.timeValueBox, { backgroundColor: theme.primary + "14" }]}>
+              <ThemedText style={[styles.timeValue, { color: theme.primary }]}>{String(editingHour).padStart(2, "0")}</ThemedText>
+            </View>
+            <Pressable onPress={() => setEditingHour(editingHour === 1 ? 12 : editingHour - 1)} style={styles.timeArrow}>
+              <Feather name="chevron-down" size={22} color={theme.primary} />
+            </Pressable>
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 4 }}>Hour</ThemedText>
+          </View>
+
+          <ThemedText style={[styles.timeColon, { color: theme.text }]}>:</ThemedText>
+
+          <View style={styles.timeColumn}>
+            <Pressable onPress={() => setEditingMinute(editingMinute === 45 ? 0 : editingMinute + 15)} style={styles.timeArrow}>
+              <Feather name="chevron-up" size={22} color={theme.primary} />
+            </Pressable>
+            <View style={[styles.timeValueBox, { backgroundColor: theme.primary + "14" }]}>
+              <ThemedText style={[styles.timeValue, { color: theme.primary }]}>{String(editingMinute).padStart(2, "0")}</ThemedText>
+            </View>
+            <Pressable onPress={() => setEditingMinute(editingMinute === 0 ? 45 : editingMinute - 15)} style={styles.timeArrow}>
+              <Feather name="chevron-down" size={22} color={theme.primary} />
+            </Pressable>
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 4 }}>Min</ThemedText>
+          </View>
+
+          <View style={styles.timeColumn}>
+            <Pressable
+              onPress={() => setEditingAmPm("AM")}
+              style={[styles.ampmBtn, { backgroundColor: editingAmPm === "AM" ? theme.primary : theme.primary + "14" }]}
+            >
+              <ThemedText style={{ color: editingAmPm === "AM" ? "#fff" : theme.primary, fontWeight: "700" }}>AM</ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => setEditingAmPm("PM")}
+              style={[styles.ampmBtn, { backgroundColor: editingAmPm === "PM" ? theme.primary : theme.primary + "14", marginTop: Spacing.sm }]}
+            >
+              <ThemedText style={{ color: editingAmPm === "PM" ? "#fff" : theme.primary, fontWeight: "700" }}>PM</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+        <Pressable onPress={handleSaveTime} style={{ marginTop: Spacing.lg }}>
+          <LinearGradient colors={["#FF6B35", "#FF8C35"]} style={styles.nameSaveBtn}>
+            <ThemedText style={{ color: "#fff", fontWeight: "700" }}>{t.common.save}</ThemedText>
+          </LinearGradient>
         </Pressable>
       </BottomSheet>
 
@@ -772,4 +935,30 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center",
   },
   nameSaveBtn: { height: 50, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+
+  // ─ Time Picker ─────────────────────
+  timePicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
+  timeColumn: { alignItems: "center", gap: Spacing.xs },
+  timeArrow: { padding: Spacing.sm },
+  timeValueBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  timeValue: { fontSize: 32, fontWeight: "700" },
+  timeColon: { fontSize: 32, fontWeight: "700", marginBottom: Spacing["2xl"] },
+  ampmBtn: {
+    width: 60,
+    paddingVertical: Spacing.md,
+    borderRadius: 12,
+    alignItems: "center",
+  },
 });

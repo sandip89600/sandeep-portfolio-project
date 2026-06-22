@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -544,6 +545,15 @@ export default function AttendanceScreen() {
                   { backgroundColor: theme.backgroundSecondary },
                 ]}
               >
+                {worker.photoUri ? (
+                  <Image source={{ uri: worker.photoUri }} style={styles.workerAvatar} />
+                ) : (
+                  <View style={[styles.workerAvatarPlaceholder, { backgroundColor: theme.primary + "25" }]}>
+                    <ThemedText style={[styles.workerAvatarInitial, { color: theme.primary }]}>
+                      {worker.name.charAt(0).toUpperCase()}
+                    </ThemedText>
+                  </View>
+                )}
                 <ThemedText
                   type="small"
                   style={styles.workerName}
@@ -662,15 +672,37 @@ const styles = StyleSheet.create({
   workerNameCell: {
     width: NAME_COLUMN_WIDTH,
     height: CELL_SIZE,
-    justifyContent: "center",
-    paddingHorizontal: Spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.xs,
+    gap: Spacing.xs,
     borderRightWidth: 1,
     borderRightColor: "rgba(0,0,0,0.1)",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.1)",
   },
+  workerAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    flexShrink: 0,
+  },
+  workerAvatarPlaceholder: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  workerAvatarInitial: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
   workerName: {
+    flex: 1,
     fontWeight: "500",
+    fontSize: 11,
   },
   attendanceRow: {
     flexDirection: "row",

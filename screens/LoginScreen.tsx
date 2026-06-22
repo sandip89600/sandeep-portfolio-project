@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -19,6 +19,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { AppInfoModal } from "@/components/AppInfoModal";
@@ -27,6 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Language, languageNames } from "@/constants/i18n";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { storage } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootNavigatorParamList } from "@/navigation/RootNavigator";
@@ -52,12 +55,71 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginType, setLoginType] = useState<"admin" | "user">("user");
   const [showAppInfo, setShowAppInfo] = useState(false);
+  const [hasBiometric, setHasBiometric] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState("Biometric Login");
 
   const buttonScale = useSharedValue(1);
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
   }));
+
+  useEffect(() => {
+    checkBiometricAvailability();
+  }, []);
+
+  const checkBiometricAvailability = async () => {
+    if (Platform.OS === "web") return;
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) return;
+
+      const savedCreds = await storage.getBiometricCredentials();
+      if (savedCreds) {
+        setHasBiometric(true);
+        setEmail(savedCreds.email);
+
+        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+          setBiometricLabel("Face ID Login");
+        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+          setBiometricLabel("Fingerprint Login");
+        }
+      }
+    } catch {}
+  };
+
+  const handleBiometricLogin = async () => {
+    if (Platform.OS === "web") return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const savedCreds = await storage.getBiometricCredentials();
+      if (!savedCreds) {
+        Alert.alert(t.common.error, "No saved credentials. Please log in with email first with Remember Me enabled.");
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Login to Haajari",
+        cancelLabel: t.common.cancel,
+        fallbackLabel: "Use Password",
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        setIsLoading(true);
+        try {
+          const success = await login(savedCreds.email, savedCreds.password, true);
+          if (!success) {
+            Alert.alert(t.common.error, t.auth.invalidCredentials);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    } catch {
+      Alert.alert(t.common.error, "Biometric authentication failed.");
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -70,6 +132,8 @@ export default function LoginScreen() {
       const success = await login(email, password, rememberMe);
       if (!success) {
         Alert.alert(t.common.error, t.auth.invalidCredentials);
+      } else if (rememberMe && Platform.OS !== "web") {
+        await storage.saveBiometricCredentials(email.trim(), password);
       }
     } finally {
       setIsLoading(false);
@@ -265,9 +329,7 @@ export default function LoginScreen() {
                 styles.checkbox,
                 {
                   borderColor: rememberMe ? theme.primary : theme.border,
-                  backgroundColor: rememberMe
-                    ? theme.primary
-                    : "transparent",
+                  backgroundColor: rememberMe ? theme.primary : "transparent",
                 },
               ]}
             >
@@ -282,12 +344,8 @@ export default function LoginScreen() {
 
           <AnimatedPressable
             onPress={handleLogin}
-            onPressIn={() => {
-              buttonScale.value = withSpring(0.96);
-            }}
-            onPressOut={() => {
-              buttonScale.value = withSpring(1);
-            }}
+            onPressIn={() => { buttonScale.value = withSpring(0.96); }}
+            onPressOut={() => { buttonScale.value = withSpring(1); }}
             disabled={isLoading}
             style={[
               styles.loginButton,
@@ -303,6 +361,24 @@ export default function LoginScreen() {
             </ThemedText>
           </AnimatedPressable>
 
+          {hasBiometric && Platform.OS !== "web" ? (
+            <Pressable
+              onPress={handleBiometricLogin}
+              style={[
+                styles.biometricButton,
+                { borderColor: theme.primary + "40", backgroundColor: theme.primary + "0C" },
+              ]}
+            >
+              <Feather name="shield" size={20} color={theme.primary} />
+              <ThemedText
+                type="body"
+                style={{ color: theme.primary, marginLeft: Spacing.sm, fontWeight: "600" }}
+              >
+                {biometricLabel}
+              </ThemedText>
+            </Pressable>
+          ) : null}
+
           {loginType === "user" && (
             <View style={styles.signupContainer}>
               <ThemedText type="body">{t.auth.noAccount} </ThemedText>
@@ -316,10 +392,7 @@ export default function LoginScreen() {
 
           <Pressable
             onPress={loginAsGuest}
-            style={[
-              styles.skipButton,
-              { borderColor: theme.border },
-            ]}
+            style={[styles.skipButton, { borderColor: theme.border }]}
           >
             <Feather name="eye" size={16} color={theme.textSecondary} />
             <ThemedText
@@ -343,12 +416,8 @@ export default function LoginScreen() {
                 style={[
                   styles.languageButton,
                   {
-                    backgroundColor:
-                      language === lang
-                        ? theme.primary
-                        : theme.backgroundDefault,
-                    borderColor:
-                      language === lang ? theme.primary : theme.border,
+                    backgroundColor: language === lang ? theme.primary : theme.backgroundDefault,
+                    borderColor: language === lang ? theme.primary : theme.border,
                   },
                 ]}
               >
@@ -373,12 +442,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
@@ -393,28 +458,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: Spacing.lg,
   },
-  appName: {
-    marginBottom: Spacing.xs,
-  },
-  tagline: {
-    textAlign: "center",
-  },
+  appName: { marginBottom: Spacing.xs },
+  tagline: { textAlign: "center" },
   infoHint: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: Spacing.md,
     justifyContent: "center",
   },
-  formContainer: {
-    flex: 1,
-  },
+  formContainer: { flex: 1 },
   welcomeText: {
     marginBottom: Spacing["2xl"],
     textAlign: "center",
   },
-  inputContainer: {
-    marginBottom: Spacing.lg,
-  },
+  inputContainer: { marginBottom: Spacing.lg },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -423,17 +480,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: Spacing.md,
   },
-  inputIcon: {
-    marginRight: Spacing.sm,
-  },
+  inputIcon: { marginRight: Spacing.sm },
   input: {
     flex: 1,
     fontSize: 16,
     height: "100%",
   },
-  eyeButton: {
-    padding: Spacing.xs,
-  },
+  eyeButton: { padding: Spacing.xs },
   rememberMeContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -448,9 +501,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: Spacing.sm,
   },
-  rememberMeText: {
-    flex: 1,
-  },
+  rememberMeText: { flex: 1 },
   loginButton: {
     height: Spacing.buttonHeight,
     borderRadius: BorderRadius.xs,
@@ -460,6 +511,15 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontWeight: "600",
     fontSize: 16,
+  },
+  biometricButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+    height: Spacing.buttonHeight,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1.5,
   },
   languageContainer: {
     alignItems: "center",
