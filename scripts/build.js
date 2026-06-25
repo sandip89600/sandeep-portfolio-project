@@ -100,6 +100,7 @@ async function startMetro() {
 
   console.log("Starting Metro...");
   metroProcess = spawn("npm", ["run", "dev"], {
+    cwd: path.join(__dirname, "../frontend"),
     stdio: ["ignore", "ignore", "ignore"],
     detached: false,
   });

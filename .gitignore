@@ -31,13 +31,25 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
 *.tsbuildinfo
 
-app-example
-
 # generated native folders
 /ios
 /android
+
+# backend local/generated files
+backend/dist/
+backend/data/
+backend/data_new/
+backend/uploads/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
