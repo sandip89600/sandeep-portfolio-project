@@ -1,18 +1,15 @@
-import React ,{useState} from 'react'
-import { ProjectData } from '../../assets/Data';
+import React from 'react'
 
 const ProjectHeader = () => {
-
-      // Logic Filter
-
-  
   return (
-        <div className='flex flex-col items-center p-8 text-white'>
-          <div className="relative pb-7">
-            <h1 className="text-4xl font-bold relative inline-block after:content-[''] after:w-12 after:h-0.5 after:bg-orange-500 after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-3">
-              Projects
-            </h1>
-          </div>
+    <div className="flex flex-col items-center pt-16 pb-8 text-center px-6">
+      <span className="text-xs font-semibold tracking-widest text-cyan-400 uppercase">
+        Portfolio Showcases
+      </span>
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2 mb-4">
+        Featured Projects
+      </h2>
+      <div className="w-16 h-1 bg-gradient-to-r from-cyan-400 to-indigo-500 mx-auto rounded-full" />
     </div>
   )
 }

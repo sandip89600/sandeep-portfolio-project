@@ -1,13 +1,19 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { FaWhatsapp } from 'react-icons/fa6'
 
 const LinkWhatapp = () => {
   return (
-    <>
-        <Link to='https://wa.me/705822107' target='_blank'>
-          <button className='bg-green-500 hover:bg-green-600 text-white font-medium px-6 py-2.5 rounded-lg shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-105 transition-all'>Chat with Us</button>
-        </Link>
-    </>
+    <a
+      href="https://wa.me/+917058222107"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex"
+    >
+      <button className="cursor-pointer flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-emerald-600/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-500 hover:shadow-emerald-500/25">
+        <FaWhatsapp className="text-lg" />
+        Chat with Us
+      </button>
+    </a>
   )
 }
 

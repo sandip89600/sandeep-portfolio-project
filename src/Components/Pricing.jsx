@@ -1,4 +1,3 @@
-// components/Pricing.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -10,142 +9,145 @@ const Pricing = () => {
       price: '₹7,000 - ₹15,000+',
       features: [
         'Responsive multi-page layout',
-        'Basic contact form & Google Maps',
-        'Basic on-page SEO'
+        'Basic contact form & Google Maps integration',
+        'Basic on-page SEO optimization',
+        'Social media links integration'
       ],
       badge: null
     },
     {
       title: '10‑Page Website',
-      desc: 'Small business site with more content and basic SEO.',
+      desc: 'Small business site with content scaling and intermediate SEO setups.',
       price: '₹15,000 - ₹25,000+',
       features: [
-        'Content-rich multi-page site',
-        'SEO-friendly structure',
-        'Faster load & optimizations'
+        'Content-rich multi-page layout',
+        'Intermediate SEO optimization',
+        'Optimized performance & assets sizing',
+        'Interactive UI components & animations'
       ],
       badge: 'Popular'
     },
     {
       title: 'Custom / Larger Website',
-      desc: 'Advanced features — blogs, database integration, custom modules.',
+      desc: 'Advanced features — blogs, database operations, user authentication.',
       price: '₹35,000 - ₹60,000+',
       features: [
-        'Custom architecture & CMS',
-        'Database & user authentication',
-        'Advanced integrations & APIs'
+        'Custom web application architectures',
+        'Secure databases & user authentication',
+        'API integrations & custom dashboards',
+        '1-Month post-launch maintenance'
       ],
       badge: 'Enterprise'
     }
   ];
 
   return (
-    <section id="pricing" className="py-16 md:py-24 bg-gradient-to-b from-slate-900 to-slate-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-        
+    <section id="pricing" className="py-20 bg-slate-950/20 border-t border-slate-900 relative">
+      <div className="mx-auto max-w-7xl px-6 md:px-12">
         {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-white via-orange-200 to-orange-500 bg-clip-text text-transparent">
-              Pricing
-            </span>
+        <div className="text-center mb-16">
+          <span className="text-xs font-semibold tracking-widest text-cyan-400 uppercase">
+            Flexible Pricing
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2 mb-4">
+            Transparent Plans
           </h2>
-          <div className="w-20 h-1 bg-orange-500 mx-auto mb-6 rounded-full"></div>
-          <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">
-            Simple, transparent pricing for medium to large projects. 
-            Prices are indicative and may vary based on requirements.
+          <div className="w-16 h-1 bg-gradient-to-r from-cyan-400 to-indigo-500 mx-auto mb-6 rounded-full" />
+          <p className="max-w-2xl mx-auto text-base text-slate-400 font-medium">
+            Find the perfect web architecture package for your business. Pricing is approximate and scales based on project complexity.
           </p>
         </div>
 
-        {/* Pricing Grid - Responsive */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* Pricing Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {plans.map((plan, idx) => (
-            <div 
+            <div
               key={idx}
               className={`
-                relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 lg:p-8 
-                border border-slate-700 transition-all duration-300 
-                hover:border-orange-500/50 hover:shadow-xl hover:-translate-y-1
-                ${plan.badge === 'Popular' ? 'lg:scale-105 border-orange-500/30 shadow-lg' : ''}
+                relative flex flex-col justify-between rounded-2xl p-8 
+                border transition-all duration-300 hover:-translate-y-1.5
+                ${
+                  plan.badge === 'Popular'
+                    ? 'bg-slate-900/40 border-cyan-500/30 shadow-[0_12px_30px_-10px_rgba(34,211,238,0.15)] md:scale-105'
+                    : 'bg-slate-900/20 border-slate-800/80 hover:border-cyan-500/20 hover:bg-slate-900/45 hover:shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                }
               `}
             >
-              {/* Popular Badge */}
-              {plan.badge === 'Popular' && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-              
-              {/* Enterprise Badge */}
-              {plan.badge === 'Enterprise' && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                    Best Value
+              {/* Badge */}
+              {plan.badge && (
+                <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2">
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full text-white shadow-md ${
+                    plan.badge === 'Popular' 
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 shadow-cyan-500/20' 
+                      : 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-indigo-500/20'
+                  }`}>
+                    {plan.badge === 'Popular' ? 'Most Popular' : 'Premium choice'}
                   </span>
                 </div>
               )}
 
-              {/* Plan Title */}
-              <h3 className="text-xl md:text-2xl font-bold text-white text-center mb-3">
-                {plan.title}
-              </h3>
-              
-              {/* Description */}
-              <p className="text-slate-400 text-sm text-center mb-4 min-h-[60px]">
-                {plan.desc}
-              </p>
-              
-              {/* Price */}
-              <div className="text-center mb-6">
-                <span className="text-3xl md:text-4xl font-bold text-orange-500">
-                  {plan.price.split(' - ')[0]}
-                </span>
-                {plan.price.includes('-') && (
-                  <span className="text-slate-400 text-lg">
-                    {' - '}
-                    <span className="text-orange-400 font-semibold">
-                      {plan.price.split(' - ')[1]}
-                    </span>
+              <div>
+                {/* Plan Header */}
+                <h3 className="text-xl font-bold text-white mb-2">{plan.title}</h3>
+                <p className="text-slate-400 text-xs min-h-[40px] leading-relaxed mb-6">
+                  {plan.desc}
+                </p>
+
+                {/* Price Display */}
+                <div className="mb-8 border-b border-slate-900 pb-6">
+                  <span className="text-2xl sm:text-3xl font-black text-cyan-400">
+                    {plan.price.split(' - ')[0]}
                   </span>
-                )}
-                <p className="text-slate-500 text-xs mt-1">*plus applicable taxes</p>
+                  {plan.price.includes('-') && (
+                    <span className="text-slate-400 text-sm font-semibold">
+                      {' - '}
+                      <span className="text-slate-200">
+                        {plan.price.split(' - ')[1]}
+                      </span>
+                    </span>
+                  )}
+                  <p className="text-slate-500 text-[10px] mt-1.5">*Custom project quotes available</p>
+                </div>
+
+                {/* Features List */}
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-2.5 text-slate-300 text-xs sm:text-sm">
+                      <svg className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              
-              {/* Features List */}
-              <ul className="space-y-3 mb-8 min-h-[160px]">
-                {plan.features.map((feature, fIdx) => (
-                  <li key={fIdx} className="flex items-start gap-2 text-slate-300 text-sm">
-                    <svg className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              {/* CTA Button */}
-              <a 
-                href="#contact" 
+
+              {/* Action Button */}
+              <Link
+                to="/contact"
                 className={`
-                  block text-center py-3 px-4 rounded-xl font-semibold transition-all duration-300
-                  ${plan.badge === 'Popular' 
-                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5' 
-                    : 'bg-slate-700 text-white hover:bg-orange-500 hover:shadow-lg transition-all'
+                  cursor-pointer block text-center py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300
+                  ${
+                    plan.badge === 'Popular'
+                      ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg hover:shadow-cyan-500/20 hover:scale-[1.01]'
+                      : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-850'
                   }
                 `}
               >
-                {idx === 2 ? 'Get a Quote →' : 'Get Started →'}
-              </a>
+                {idx === 2 ? 'Get a Quote' : 'Choose Package'}
+              </Link>
             </div>
           ))}
         </div>
 
-        {/* Additional Note */}
-        <div className="mt-12 text-center">
-          <p className="text-slate-500 text-sm">
-            Need a custom solution? <Link to="/contact" className="text-orange-500 hover:text-orange-400 font-medium">Contact me</Link> for a personalized quote.
+        {/* Custom Solution Callout */}
+        <div className="mt-16 text-center">
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">
+            Need customized APIs or dedicated server deployments?{' '}
+            <Link to="/contact" className="text-cyan-400 hover:underline transition-all">
+              Contact me directly
+            </Link>{' '}
+            for tailored consulting quotes.
           </p>
         </div>
       </div>

@@ -1,96 +1,138 @@
 import React from 'react'
-
+import { motion } from 'framer-motion'
+import { technicalSkills } from '../assets/Data'
 
 const About = () => {
   const statsData = [
-    { percent: '30%', text: 'Increased web traffic by 30% through optimized designs' },
-    { percent: '40%', text: 'Improved search visibility by 40% via SEO implementation' },
-    { percent: '15%', text: 'Contributed to 15% sales growth through e-commerce development' },
-    { percent: '100%', text: 'Maintained 100% project completion rate' }
+    { percent: '30%', text: 'Increased web traffic via optimized UX layouts' },
+    { percent: '40%', text: 'Improved SEO visibility and search rankings' },
+    { percent: '15%', text: 'Client sales growth via e-commerce integrations' },
+    { percent: '100%', text: 'Project completion & client satisfaction rate' }
   ];
 
-  // Services data array
   const servicesData = [
-    { icon: 'fa-code', name: 'Website Development' },
-    { icon: 'fa-mobile-alt', name: 'App Development' },
-    { icon: 'fa-cloud', name: 'Website Hosting' }
+    { icon: 'fa-code', name: 'Website Development', desc: 'Custom, blazing fast single and multi-page web applications built on React.' },
+    { icon: 'fa-mobile-screen-button', name: 'App Development', desc: 'Responsive and adaptive interface designs targeting modern mobile clients.' },
+    { icon: 'fa-cloud', name: 'Hosting & Devops', desc: 'Cloud deployments, domain setups, CI/CD pipelines, and maintenance services.' }
   ];
 
   return (
-    <div>
- <section id="about" className="py-16 md:py-24 bg-gradient-to-b from-slate-900 to-slate-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
-        
-        {/* Section Title */}
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4 md:mb-6">
-          <span className="bg-gradient-to-r from-white via-orange-200 to-orange-500 bg-clip-text text-transparent">
-            About Me
-          </span>
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="mx-auto max-w-6xl px-6 py-16 md:px-12 lg:py-24 w-full flex-grow"
+    >
+      {/* Title */}
+      <div className="text-center mb-16">
+        <span className="text-xs font-semibold tracking-widest text-cyan-400 uppercase">
+          Get to Know Me
+        </span>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-2 mb-4">
+          About Myself
         </h2>
-        
-        {/* Decorative line */}
-        <div className="w-20 h-1 bg-orange-500 mx-auto mb-8 md:mb-12 rounded-full"></div>
+        <div className="w-16 h-1 bg-gradient-to-r from-cyan-400 to-indigo-500 mx-auto mb-6 rounded-full" />
+      </div>
 
-        {/* About Intro Paragraph */}
-        <div className="max-w-3xl mx-auto mb-12 md:mb-16">
-          <p className="text-slate-300 text-base md:text-lg lg:text-xl leading-relaxed text-center">
-            Currently-learning Full Stack Web Developer with hands-on experience in frontend
-            technologies and a proven track record of delivering impactful web solutions. Completed Bachelor Degree
-            of Computer Science at <span className="text-orange-400 font-semibold">Bhonsala Military College</span> with practical experience gained through
-            internships and project development.
+      {/* Intro Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-24">
+        {/* Paragraph Details */}
+        <div className="lg:col-span-7 flex flex-col justify-center">
+          <h3 className="text-2xl font-bold text-white mb-4">
+            A Passionate Full Stack Developer
+          </h3>
+          <p className="text-slate-400 text-base md:text-lg leading-relaxed mb-6">
+            Currently learning and implementing full-stack web architectures, specializing in React, Node, and Tailwind CSS layouts. I hold a Bachelor of Computer Science from{' '}
+            <span className="text-cyan-400 font-semibold">Bhonsala Military College</span>, combining formal training with extensive internship projects to create fast, scalable interfaces.
+          </p>
+          <p className="text-slate-400 text-base md:text-lg leading-relaxed">
+            I build with a strong focus on pixel-perfect layouts, responsive utility grids, SEO integrations, and fluid user interaction models. Let's work together to translate your vision into clean, deployable code structures.
           </p>
         </div>
 
-        {/* Stats Grid - Responsive 2x2 on mobile, 4 columns on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 md:mb-20">
+        {/* Stats Grid */}
+        <div className="lg:col-span-5 grid grid-cols-2 gap-4">
           {statsData.map((stat, idx) => (
-            <div 
-              key={idx} 
-              className="group bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 text-center hover:border-orange-500/50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            <div
+              key={idx}
+              className="group rounded-2xl border border-slate-900 bg-slate-900/20 p-5 text-center transition-all duration-300 hover:border-cyan-500/25 hover:bg-slate-900/50 hover:shadow-[0_8px_20px_-10px_rgba(34,211,238,0.15)]"
             >
-              {/* Stat Circle / Percent */}
-              <div className="relative w-24 h-24 mx-auto mb-4">
-                <div className="absolute inset-0 bg-orange-500/20 rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-                <div className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-orange-500 to-orange-600 rounded-full shadow-lg">
-                  <span className="text-white font-black text-2xl md:text-3xl">{stat.percent}</span>
-                </div>
-              </div>
-              {/* Stat Text */}
-              <p className="text-slate-300 text-sm md:text-base font-medium leading-relaxed">
+              <h4 className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-3xl font-black text-transparent group-hover:scale-105 transition-transform duration-300">
+                {stat.percent}
+              </h4>
+              <p className="text-slate-400 text-xs font-semibold mt-2.5 leading-snug">
                 {stat.text}
               </p>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Services Offered Section */}
-        <div className="text-center mb-8">
-          <h3 className="text-2xl md:text-3xl font-semibold text-white mb-2">
-            What I Do
+      {/* Technical Skills Section */}
+      <div className="mb-24">
+        <div className="text-center mb-16">
+          <span className="text-xs font-semibold tracking-widest text-indigo-400 uppercase">
+            My Tooling
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 mb-2">
+            Technical Competence
           </h3>
-          <p className="text-slate-400 text-sm md:text-base">Professional services I offer</p>
-          <div className="w-16 h-0.5 bg-orange-500 mx-auto mt-3 mb-8"></div>
+          <div className="w-12 h-0.5 bg-indigo-500 mx-auto mt-3 mb-6" />
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6 md:gap-8">
-          {servicesData.map((service, idx) => (
-            <div 
-              key={idx}
-              className="group flex flex-col items-center bg-slate-800/40 border border-slate-700 rounded-2xl px-8 py-6 min-w-[160px] hover:border-orange-500/50 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 cursor-default"
-            >
-              {/* Icon Container - Font Awesome icons (make sure Font Awesome is installed/imported) */}
-              <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl mb-4 group-hover:from-orange-500/20 group-hover:to-orange-600/20 transition-all duration-300">
-                <i className={`fas ${service.icon} text-3xl text-orange-500 group-hover:text-orange-400 transition-colors`}></i>
+        {/* Skills Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {technicalSkills.map((skill, idx) => (
+            <div key={idx} className="flex flex-col">
+              <div className="flex justify-between items-center mb-2 px-1">
+                <span className="text-sm font-bold text-slate-200">{skill.name}</span>
+                <span className="text-xs font-bold text-cyan-400">{skill.percentage}%</span>
               </div>
-              <p className="text-white font-semibold text-base md:text-lg">
-                {service.name}
+              <div className="w-full h-2 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${skill.percentage}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: 'easeOut', delay: idx * 0.05 }}
+                  className="h-full bg-gradient-to-r from-cyan-500 to-indigo-600 rounded-full"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Services Section */}
+      <div>
+        <div className="text-center mb-16">
+          <span className="text-xs font-semibold tracking-widest text-purple-400 uppercase">
+            Services
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 mb-2">
+            What I Do
+          </h3>
+          <div className="w-12 h-0.5 bg-purple-500 mx-auto mt-3 mb-6" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {servicesData.map((service, idx) => (
+            <div
+              key={idx}
+              className="group flex flex-col items-center text-center rounded-2xl border border-slate-900 bg-slate-900/20 p-8 hover:border-cyan-500/20 hover:bg-slate-900/40 transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-850 bg-slate-900/80 group-hover:border-cyan-500/30 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all duration-300">
+                <i className={`fa-solid ${service.icon} text-2xl text-cyan-400 group-hover:scale-105 transition-transform`} />
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">{service.name}</h4>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                {service.desc}
               </p>
             </div>
           ))}
         </div>
       </div>
-    </section>
-    </div>
+    </motion.div>
   )
 }
 
