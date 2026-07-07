@@ -1,5 +1,5 @@
 import bg from './Images/bg.png';
-import image1 from './Images/Image.png';
+import image1 from './Images/image.png';
 import image2 from './Images/portfolio03.jpeg'
 import image3 from './Images/portfolio02.jpeg'
 import image4 from './Images/portfolio01.jpeg'
