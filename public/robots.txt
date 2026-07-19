@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.portfolio.deepitlabs.in/sitemap.xml
