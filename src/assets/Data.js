@@ -3,6 +3,10 @@ import image1 from './Images/image.png';
 import image2 from './Images/portfolio03.jpeg'
 import image3 from './Images/portfolio02.jpeg'
 import image4 from './Images/portfolio01.jpeg'
+import image5 from './Images/Image4.png';
+import portfolioMockup from './Images/portfolio_mockup.png';
+import haajariMockup from './Images/haajari_mockup.png';
+import studio3dMockup from './Images/studio_3d_mockup.png';
 import { Link } from 'react-router-dom';
 
 
@@ -51,6 +55,50 @@ export const ProjectData = [
         Description2: "Modern web design principles and best practices",
         Description3: "100% project completion rate",
         link: "https://portfolio-project-my-daily-work.vercel.app/"
+    },
+    {
+      id: 4,
+      projectName: 'ShopEase Shopping Website',
+      portfolio:image5,
+        tech: "React Js, Php ,MySQL",
+        About: "Multiple portfolio websites showcasing web development skills.",
+        Description1: "Optimized designs resulting in 30% increase in web traffic",
+        Description2: "Modern web design principles and best practices",
+        Description3: "100% project completion rate",
+        link: "https://a2-z-website.vercel.app"
+    },
+    {
+        id: 5,
+        projectName: 'Sandeep Pandit Developer Portfolio',
+        portfolio: portfolioMockup,
+        tech: "React, Tailwind CSS, Framer Motion, Vite",
+        About: "Personal developer portfolio website showcasing skills, projects, services, and experience.",
+        Description1: "Highly premium dark mode glassmorphic interface layout",
+        Description2: "Fully responsive floating navbar and structured career timeline",
+        Description3: "Animated stats counters and interactive skill trackers",
+        link: "https://www.portfolio.deepitlabs.in"
+    },
+    {
+        id: 6,
+        projectName: 'Haajari App Attendance Tracker',
+        portfolio: haajariMockup,
+        tech: "React, Node.js, Express, MongoDB, Tailwind CSS",
+        About: "A comprehensive attendance tracking system designed for tracking student/employee attendance with intuitive reporting interfaces.",
+        Description1: "User-friendly real-time check-in and check-out logs",
+        Description2: "Responsive metrics dashboard for organization administrators",
+        Description3: "Interactive monthly statistics charts and attendance trends",
+        link: "https://www.haajari.deepitlabs.in"
+    },
+    {
+        id: 7,
+        projectName: 'All India 3D Studio',
+        portfolio: studio3dMockup,
+        tech: "React, Three.js, Tailwind CSS, Vite",
+        About: "High-end 3D visual studio platform presenting architectural renderings, assets, and modeling portfolios.",
+        Description1: "Aesthetic gallery grid presenting architectural designs",
+        Description2: "Interactive high-performance 3D canvas layouts",
+        Description3: "SEO-friendly content layout designed for creative studios",
+        link: "https://www.allindia3dstudio.deepitlabs.in"
     }
 ]
 
