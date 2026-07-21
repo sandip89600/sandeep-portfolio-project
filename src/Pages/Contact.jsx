@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone, Send, ArrowRight } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, ArrowRight, MessageSquare, Calendar } from 'lucide-react';
 import { FaLinkedinIn, FaGithub, FaXTwitter } from 'react-icons/fa6';
 
 const Contact = () => {
@@ -59,6 +59,18 @@ const Contact = () => {
       href: 'tel:+917058222107'
     },
     {
+      icon: <MessageSquare className="h-5 w-5 text-emerald-400" />,
+      title: 'WhatsApp Chat',
+      value: 'Chat in real-time',
+      href: 'https://wa.me/+917058222107'
+    },
+    {
+      icon: <Calendar className="h-5 w-5 text-pink-400" />,
+      title: 'Book a Meeting',
+      value: 'Schedule a call',
+      href: 'https://calendly.com/sandippandit'
+    },
+    {
       icon: <MapPin className="h-5 w-5 text-purple-400" />,
       title: 'My Base',
       value: 'Nashik, Maharashtra, India',
@@ -100,6 +112,8 @@ const Contact = () => {
               <a
                 key={idx}
                 href={detail.href}
+                target={detail.href.startsWith('http') ? '_blank' : undefined}
+                rel={detail.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                 className="flex items-center gap-4 rounded-xl border border-slate-900 bg-slate-900/10 p-4 transition-all duration-300 hover:border-cyan-500/25 hover:bg-slate-900/35 group"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900/60 group-hover:border-cyan-500/30 transition-all duration-300">

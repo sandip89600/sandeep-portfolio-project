@@ -1,8 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { technicalSkills } from '../assets/Data'
+import { Coffee, Copy, Check } from 'lucide-react'
 
 const About = () => {
+  const [copied, setCopied] = useState(false);
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText("sandippandit896@okaxis");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   const statsData = [
     { percent: '30%', text: 'Increased web traffic via optimized UX layouts' },
     { percent: '40%', text: 'Improved SEO visibility and search rankings' },
@@ -130,6 +138,60 @@ const About = () => {
               </p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Support My Work Section */}
+      <div id="support" className="mt-24 scroll-mt-20">
+        <div className="text-center mb-12">
+          <span className="text-xs font-semibold tracking-widest text-emerald-400 uppercase">
+            Support My Journey
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 mb-2">
+            Support My Work
+          </h3>
+          <div className="w-12 h-0.5 bg-emerald-500 mx-auto mt-3 mb-6" />
+          <p className="max-w-xl mx-auto text-sm text-slate-400 leading-relaxed">
+            If you enjoy my open-source projects or find my work helpful, consider buying me a coffee or supporting via UPI!
+          </p>
+        </div>
+
+        <div className="max-w-xl mx-auto rounded-2xl border border-slate-900/80 bg-slate-900/20 p-8 text-center hover:border-cyan-500/15 hover:bg-slate-900/30 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+            {/* Buy Me A Coffee */}
+            <a
+              href="https://buymeacoffee.com/sandippandit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto"
+            >
+              <button className="cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[#ffdd00] px-6 py-3 text-sm font-bold text-slate-950 shadow-md hover:bg-[#ffea00] hover:scale-102 hover:-translate-y-0.5 transition-all duration-300">
+                <Coffee className="h-4 w-4" />
+                <span>Buy Me a Coffee</span>
+              </button>
+            </a>
+
+            {/* UPI Support */}
+            <button
+              onClick={handleCopyUpi}
+              className="cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-6 py-3 text-sm font-semibold text-slate-350 hover:border-slate-700 hover:text-white hover:-translate-y-0.5 transition-all duration-300"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-400" />
+                  <span>UPI ID Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 text-slate-450" />
+                  <span>Copy UPI ID</span>
+                </>
+              )}
+            </button>
+          </div>
+          <p className="text-slate-500 text-[11px] mt-4 font-mono">
+            UPI ID: sandippandit896@okaxis
+          </p>
         </div>
       </div>
     </motion.div>

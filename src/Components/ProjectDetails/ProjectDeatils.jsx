@@ -1,4 +1,6 @@
 import React from 'react'
+import { FaGithub } from 'react-icons/fa6'
+import { ExternalLink } from 'lucide-react'
 
 const ProjectDeatils = ({ data }) => {
   // Parse tech stack comma-separated string into visual tags
@@ -37,17 +39,34 @@ const ProjectDeatils = ({ data }) => {
         </div>
       </div>
 
-      {/* External Action Button */}
-      <a
-        href={data.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="w-full"
-      >
-        <button className="cursor-pointer w-full text-center py-2.5 rounded-xl border border-slate-800 bg-slate-950/50 text-xs font-bold uppercase tracking-wider text-slate-400 transition-all duration-300 group-hover:border-cyan-500/40 group-hover:bg-cyan-500 group-hover:text-slate-950">
-          Live Demo &rarr;
-        </button>
-      </a>
+      {/* External Action Buttons */}
+      <div className="flex gap-3">
+        {/* Source Code */}
+        <a
+          href={data.github || "https://github.com/sandippandit"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-1/2"
+        >
+          <button className="cursor-pointer w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-805 bg-slate-950/20 text-xs font-bold uppercase tracking-wider text-slate-400 transition-all duration-300 hover:border-slate-700 hover:text-white hover:bg-slate-900/60">
+            <FaGithub className="h-3.5 w-3.5" />
+            Code
+          </button>
+        </a>
+
+        {/* Live Demo */}
+        <a
+          href={data.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-1/2"
+        >
+          <button className="cursor-pointer w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-800 bg-slate-955/50 text-xs font-bold uppercase tracking-wider text-slate-400 transition-all duration-300 group-hover:border-cyan-500/40 group-hover:bg-cyan-500 group-hover:text-slate-950">
+            <ExternalLink className="h-3.5 w-3.5" />
+            Demo
+          </button>
+        </a>
+      </div>
     </div>
   )
 }

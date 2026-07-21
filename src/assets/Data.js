@@ -32,7 +32,8 @@ export const ProjectData = [
         Description1: "Responsive design compatible across multiple devices",
         Description2: "Intuitive user interface with focus on user experience",
         Description3: "Full project lifecycle management from concept to deployment",
-        link: "https://sandip89600.github.io/Food-Website/"
+        link: "https://sandip89600.github.io/Food-Website/",
+        github: "https://github.com/sandip89600/Food-Website"
       },
     {
         id: 2,
@@ -43,7 +44,8 @@ export const ProjectData = [
         Description1: "Product catalog, shopping cart, and checkout functionality",
         Description2: "Achieved 15% increase in client sales through optimized UX",
         Description3: "SEO-optimized for improved search engine visibility",
-        link: "https://e-commerce-website-xi-lilac.vercel.app/"
+        link: "https://e-commerce-website-xi-lilac.vercel.app/",
+        github: "https://github.com/sandippandit"
     },
     {
       id: 3,
@@ -54,7 +56,8 @@ export const ProjectData = [
         Description1: "Optimized designs resulting in 30% increase in web traffic",
         Description2: "Modern web design principles and best practices",
         Description3: "100% project completion rate",
-        link: "https://portfolio-project-my-daily-work.vercel.app/"
+        link: "https://portfolio-project-my-daily-work.vercel.app/",
+        github: "https://github.com/sandippandit"
     },
     {
       id: 4,
@@ -65,7 +68,8 @@ export const ProjectData = [
         Description1: "Optimized designs resulting in 30% increase in web traffic",
         Description2: "Modern web design principles and best practices",
         Description3: "100% project completion rate",
-        link: "https://a2-z-website.vercel.app"
+        link: "https://a2-z-website.vercel.app",
+        github: "https://github.com/sandippandit"
     },
     {
         id: 5,
@@ -76,7 +80,8 @@ export const ProjectData = [
         Description1: "Highly premium dark mode glassmorphic interface layout",
         Description2: "Fully responsive floating navbar and structured career timeline",
         Description3: "Animated stats counters and interactive skill trackers",
-        link: "https://www.portfolio.deepitlabs.in"
+        link: "https://www.portfolio.deepitlabs.in",
+        github: "https://github.com/sandip89600/sandeep-portfolio-project"
     },
     {
         id: 6,
@@ -87,7 +92,8 @@ export const ProjectData = [
         Description1: "User-friendly real-time check-in and check-out logs",
         Description2: "Responsive metrics dashboard for organization administrators",
         Description3: "Interactive monthly statistics charts and attendance trends",
-        link: "https://www.haajari.deepitlabs.in"
+        link: "https://www.haajari.deepitlabs.in",
+        github: "https://github.com/sandippandit"
     },
     {
         id: 7,
@@ -98,7 +104,8 @@ export const ProjectData = [
         Description1: "Aesthetic gallery grid presenting architectural designs",
         Description2: "Interactive high-performance 3D canvas layouts",
         Description3: "SEO-friendly content layout designed for creative studios",
-        link: "https://www.allindia3dstudio.deepitlabs.in"
+        link: "https://www.allindia3dstudio.deepitlabs.in",
+        github: "https://github.com/sandippandit"
     }
 ]
 
